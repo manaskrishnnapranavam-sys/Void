@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID | Playback Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="void_data.js"></script>
+    <style>
+        body { background: #000; color: white; margin: 0; overflow: hidden; font-family: sans-serif; }
+        .player-container { height: 100vh; width: 100vw; position: relative; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        .controls-overlay {
+            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%, rgba(0,0,0,0.8) 100%);
+            opacity: 0; transition: opacity 0.5s ease; z-index: 10;
+        }
+        .player-container:hover .controls-overlay { opacity: 1; }
+        .back-btn { position: absolute; top: 30px; left: 30px; font-weight: bold; font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.5); transition: color 0.3s; }
+        .back-btn:hover { color: #ff3e00; }
+        .video-info { position: absolute; bottom: 40px; left: 40px; }
+        .title { font-size: 48px; font-weight: 900; letter-spacing: -2px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <video id="main-video" controls autoplay>
+            <source id="video-source" src="" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <div class="controls-overlay">
+            <a href="index.html" class="back-btn flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round"/></svg>
+                Exit Playback
+            </a>
+            <div class="video-info">
+                <p id="player-title" class="title">Transmission Unknown</p>
+                <p id="player-status" class="text-white/40 text-xs uppercase tracking-[4px]">Source: GitHub Repository</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadVideo() {
+            const params = new URLSearchParams(window.location.search);
+            const movieId = params.get('id');
+            
+            if (window.VOID_DB && movieId) {
+                const movie = window.VOID_DB.find(m => m.id === movieId);
+                if (movie) {
+                    document.getElementById('player-title').innerText = movie.title;
+                    const video = document.getElementById('main-video');
+                    const source = document.getElementById('video-source');
+                    
+                    // Note: This expects the file path from your Admin page
+                    source.src = movie.videoUrl; 
+                    video.load();
+                }
+            } else {
+                document.getElementById('player-title').innerText = "Asset Not Found";
+            }
+        }
+        window.onload = loadVideo;
+    </script>
+</body>
+</html>

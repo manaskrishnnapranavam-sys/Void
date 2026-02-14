@@ -21,12 +21,11 @@
             color: #ffffff;
             font-family: 'Inter', sans-serif;
             margin: 0;
-            overflow: hidden; /* Prevent scrolling while watching */
+            overflow: hidden;
         }
 
         .premium-font { font-family: 'Outfit', sans-serif; }
 
-        /* Custom Video UI */
         .player-wrapper {
             position: relative;
             width: 100vw;
@@ -43,7 +42,6 @@
             object-fit: contain;
         }
 
-        /* Netflix-style Overlays */
         .video-overlay {
             position: absolute;
             inset: 0;
@@ -79,27 +77,12 @@
             transition: height 0.2s;
         }
 
-        .progress-container:hover { height: 6px; }
-
         .progress-bar {
             height: 100%;
             background: var(--accent);
             width: 0%;
             border-radius: 2px;
             position: relative;
-        }
-
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            right: -6px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            background: var(--accent);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent);
         }
 
         .icon-btn {
@@ -122,6 +105,16 @@
             align-items: center;
             justify-content: center;
             text-align: center;
+            padding: 2rem;
+        }
+
+        /* Debug console style */
+        #path-debug {
+            font-family: monospace;
+            font-size: 10px;
+            color: #ff3e00;
+            margin-top: 10px;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -129,8 +122,9 @@
 
     <div id="error-screen">
         <h1 class="premium-font text-4xl font-black text-[#ff3e00] mb-4">SIGNAL LOST</h1>
-        <p class="text-white/40 mb-8 uppercase tracking-[3px]">The requested file is not readable or missing.</p>
-        <a href="index.html" class="px-8 py-3 border border-white/20 rounded-full hover:bg-white hover:text-black transition-all uppercase text-xs font-bold tracking-widest">Return to Base</a>
+        <p id="error-message" class="text-white/40 mb-2 uppercase tracking-[3px]">Media file unavailable.</p>
+        <div id="path-debug"></div>
+        <a href="index.html" class="mt-8 px-8 py-3 border border-white/20 rounded-full hover:bg-white hover:text-black transition-all uppercase text-xs font-bold tracking-widest">Return to Base</a>
     </div>
 
     <div class="player-wrapper" id="player-container">
@@ -138,9 +132,7 @@
             <source id="video-source" src="" type="video/mp4">
         </video>
 
-        <!-- Premium Overlay Controls -->
         <div class="video-overlay">
-            <!-- Top Bar -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <a href="index.html" class="icon-btn">
@@ -148,39 +140,31 @@
                     </a>
                     <div>
                         <h2 id="movie-title" class="premium-font text-xl font-bold tracking-tight">LOADING...</h2>
-                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Streaming Local Sync</p>
+                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Encrypted Stream</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Bar -->
             <div class="space-y-6">
-                <!-- Progress -->
                 <div class="progress-container" id="seek-container">
                     <div class="progress-bar" id="progress-fill"></div>
                 </div>
 
                 <div class="control-bar">
-                    <!-- Play/Pause -->
                     <button id="play-pause" class="icon-btn">
                         <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         <svg id="pause-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </button>
 
-                    <!-- Volume -->
                     <div class="flex items-center gap-3">
-                        <svg class="w-6 h-6 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                        <div class="w-20 h-1 bg-white/20 rounded-full">
-                            <div class="w-2/3 h-full bg-white rounded-full"></div>
-                        </div>
+                        <svg class="w-6 h-6 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                        <div class="w-20 h-1 bg-white/20 rounded-full"><div class="w-2/3 h-full bg-white rounded-full"></div></div>
                     </div>
 
                     <div class="flex-grow"></div>
-
                     <span class="text-xs font-mono opacity-60" id="time-display">00:00 / 00:00</span>
-
                     <button id="fullscreen-btn" class="icon-btn">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2" stroke-linecap="round"/></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5" stroke-width="2" stroke-linecap="round"/></svg>
                     </button>
                 </div>
             </div>
@@ -189,109 +173,75 @@
 
     <script>
         const video = document.getElementById('main-video');
-        const playPauseBtn = document.getElementById('play-pause');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-        const progressBar = document.getElementById('progress-fill');
-        const seekContainer = document.getElementById('seek-container');
-        const timeDisplay = document.getElementById('time-display');
-        const titleEl = document.getElementById('movie-title');
         const videoSource = document.getElementById('video-source');
+        const titleEl = document.getElementById('movie-title');
         const errorScreen = document.getElementById('error-screen');
+        const debugEl = document.getElementById('path-debug');
 
         function initPlayer() {
-            // Get ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             const movieId = urlParams.get('id');
 
             if (!movieId || !window.VOID_DB) {
-                showError();
+                showError("Database not linked.");
                 return;
             }
 
-            // Find movie in VOID_DB (shared from void_data.js)
             const movie = window.VOID_DB.find(m => String(m.id) === String(movieId));
-
-            if (!movie) {
-                showError();
+            if (!movie || !movie.videoUrl) {
+                showError("Movie ID or Video Path missing.");
                 return;
             }
 
-            // Set Title
             titleEl.innerText = movie.title.toUpperCase();
 
-            // Handle video path
-            // We assume if it's a local file name, it's in the current folder
-            if (movie.videoUrl) {
-                videoSource.src = movie.videoUrl;
-                video.load();
-                video.play().catch(() => {
-                    console.log("Autoplay blocked - user must click play");
-                });
-            } else {
-                showError();
-            }
+            // --- SMART PATH LOGIC ---
+            let path = movie.videoUrl;
+            
+            // If you typed "movie.mp4" but it's in "media/movie.mp4"
+            // we ensure the path is consistent.
+            debugEl.innerText = "Attempting to load: " + path;
+
+            videoSource.src = path;
+            video.load();
+
+            video.play().catch(err => {
+                console.warn("Autoplay blocked or file not found:", err);
+                // If it fails immediately, it might be a path error
+                if (video.networkState === 3) { 
+                    showError("File not found at: " + path);
+                }
+            });
         }
 
-        function showError() {
+        // Catching specific video errors
+        video.onerror = function() {
+            showError("The video file could not be loaded. Check your 'media' folder.");
+            debugEl.innerText = "Tried Path: " + videoSource.src;
+        };
+
+        function showError(msg) {
             errorScreen.style.display = 'flex';
+            document.getElementById('error-message').innerText = msg;
         }
 
-        // Toggle Play/Pause
-        function togglePlay() {
+        // Basic Controls
+        document.getElementById('play-pause').onclick = () => {
             if (video.paused) {
                 video.play();
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
+                document.getElementById('play-icon').classList.add('hidden');
+                document.getElementById('pause-icon').classList.remove('hidden');
             } else {
                 video.pause();
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
+                document.getElementById('play-icon').classList.remove('hidden');
+                document.getElementById('pause-icon').classList.add('hidden');
             }
-        }
+        };
 
-        playPauseBtn.addEventListener('click', togglePlay);
-        video.addEventListener('click', togglePlay);
-
-        // Update Progress
-        video.addEventListener('timeupdate', () => {
-            const percent = (video.currentTime / video.duration) * 100;
-            progressBar.style.width = `${percent}%`;
-            
-            const curMin = Math.floor(video.currentTime / 60);
-            const curSec = Math.floor(video.currentTime % 60);
-            const durMin = Math.floor(video.duration / 60) || 0;
-            const durSec = Math.floor(video.duration % 60) || 0;
-            
-            timeDisplay.innerText = `${String(curMin).padStart(2, '0')}:${String(curSec).padStart(2, '0')} / ${String(durMin).padStart(2, '0')}:${String(durSec).padStart(2, '0')}`;
-        });
-
-        // Seek
-        seekContainer.addEventListener('click', (e) => {
-            const rect = seekContainer.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            video.currentTime = pos * video.duration;
-        });
-
-        // Fullscreen
-        document.getElementById('fullscreen-btn').addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.getElementById('player-container').requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        // Hide overlay on inactivity
-        let timeout;
-        const playerWrapper = document.getElementById('player-container');
-        playerWrapper.addEventListener('mousemove', () => {
-            playerWrapper.classList.add('touch-active');
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                playerWrapper.classList.remove('touch-active');
-            }, 3000);
-        });
+        video.ontimeupdate = () => {
+            const p = (video.currentTime / video.duration) * 100;
+            document.getElementById('progress-fill').style.width = p + '%';
+        };
 
         window.onload = initPlayer;
     </script>

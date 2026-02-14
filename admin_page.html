@@ -17,7 +17,7 @@
             --admin-blue: #0070ff;
         }
 
-        body { background-color: var(--bg-deep); color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; }
+        body { background-color: var(--bg-deep); color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; }
         .premium-font { font-family: 'Outfit', sans-serif; }
 
         .sidebar { background: var(--glass); backdrop-filter: blur(25px); border-right: 1px solid var(--glass-border); z-index: 100; }
@@ -25,26 +25,26 @@
         .sidebar-item:hover, .sidebar-item.active { color: #ffffff; background: rgba(255,255,255,0.04); }
         .sidebar-item.active::before { content: ''; position: absolute; left: 0; top: 25%; height: 50%; width: 3px; background-color: var(--admin-blue); box-shadow: 0 0 20px var(--admin-blue); }
 
-        .admin-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 1.5rem; }
+        .admin-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 1.5rem; transition: transform 0.3s ease; }
         
         input, textarea, select {
-            background: rgba(0,0,0,0.4) !important;
+            background: rgba(0,0,0,0.6) !important;
             border: 1px solid rgba(255,255,255,0.1) !important;
             color: white !important;
             outline: none !important;
+            transition: all 0.2s ease;
         }
-        input:focus { border-color: var(--admin-blue) !important; }
+        input:focus { border-color: var(--admin-blue) !important; box-shadow: 0 0 15px rgba(0, 112, 255, 0.2); }
 
-        .view-section { display: none; }
+        .view-section { display: none; animation: fadeIn 0.4s ease-out; }
         .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .status-pulse {
-            width: 8px; height: 8px; border-radius: 50%;
-        }
-        .status-online { background: #00ff41; animation: pulse 2s infinite; }
-        .status-offline { background: #ff3e00; }
+        .status-pulse { width: 10px; height: 10px; border-radius: 50%; }
+        .status-online { background: #00ff41; box-shadow: 0 0 10px #00ff41; animation: pulse 2s infinite; }
+        .status-offline { background: #ff3e00; box-shadow: 0 0 10px #ff3e00; }
 
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         .file-upload-zone {
             border: 2px dashed rgba(255, 255, 255, 0.1);
@@ -55,6 +55,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            background: rgba(255,255,255,0.01);
         }
         .file-upload-zone:hover {
             border-color: var(--admin-blue);
@@ -72,7 +73,14 @@
             border-radius: 4px;
             font-size: 10px;
             font-family: monospace;
+            border: 1px solid rgba(255,255,255,0.1);
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--admin-blue); }
     </style>
 </head>
 <body>
@@ -83,7 +91,7 @@
                 <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#0070ff]">.</span></h1>
                 <div class="flex items-center mt-2">
                     <div id="connection-pulse" class="status-pulse status-offline mr-2"></div>
-                    <span id="connection-text" class="text-[8px] uppercase tracking-[3px] text-white/40 font-bold">Connecting...</span>
+                    <span id="connection-text" class="text-[8px] uppercase tracking-[3px] text-white/40 font-bold">Verifying...</span>
                 </div>
             </div>
 
@@ -103,9 +111,9 @@
         <div class="px-6">
             <div class="flex items-center p-3 bg-white/5 rounded-2xl border border-white/10 mb-4">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0070ff] to-[#00c6ff] flex items-center justify-center font-black text-xs text-white">AD</div>
-                <div class="ml-3 hidden lg:block">
+                <div class="ml-3 hidden lg:block overflow-hidden">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-white">Root Admin</p>
-                    <p class="text-[8px] text-white/40" id="auth-uid">ID: Identifying...</p>
+                    <p class="text-[8px] text-white/40 truncate" id="auth-uid">ID: Authenticating...</p>
                 </div>
             </div>
             <a href="index.html" class="block w-full py-3 text-center text-[9px] uppercase tracking-[3px] text-white/20 hover:text-[#ff3e00] transition-colors">Disconnect</a>
@@ -114,88 +122,98 @@
 
     <main class="ml-20 lg:ml-64 p-8 lg:p-16">
         
+        <!-- Dashboard View -->
         <div id="view-dashboard" class="view-section active">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">System Overview</h2>
-                <p class="text-white/40 text-sm mt-2">Authenticated synchronization with GitHub repository architecture.</p>
+                <p class="text-white/40 text-sm mt-2">Managing repository: <span class="text-blue-400">manaskrishnnapranavam-sys/Void</span></p>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="admin-card p-8">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Active Movies</p>
-                    <p class="text-4xl font-black premium-font" id="stat-movies">0</p>
+                <div class="admin-card p-8 border-white/5">
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Total Movies</p>
+                    <p class="text-5xl font-black premium-font" id="stat-movies">0</p>
                 </div>
-                <div class="admin-card p-8">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Registered Users</p>
-                    <p class="text-4xl font-black premium-font" id="stat-users">0</p>
+                <div class="admin-card p-8 border-white/5">
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Active Sessions</p>
+                    <p class="text-5xl font-black premium-font" id="stat-users">0</p>
                 </div>
-                <div class="admin-card p-8">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Storage Status</p>
-                    <p class="text-4xl font-black premium-font text-[#00ff41]">Synced</p>
+                <div class="admin-card p-8 border-white/5">
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Network Status</p>
+                    <p class="text-5xl font-black premium-font text-[#00ff41]" id="stat-sync">Online</p>
+                </div>
+            </div>
+
+            <div class="admin-card p-10 border-white/5">
+                <h4 class="premium-font text-xs font-bold uppercase tracking-[4px] text-white/40 mb-6">Recent Deployments</h4>
+                <div id="dashboard-recent-list" class="space-y-4">
+                    <p class="text-white/20 italic text-xs">Waiting for data stream...</p>
                 </div>
             </div>
         </div>
 
+        <!-- Editor View -->
         <div id="view-editor" class="view-section">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Admin Editor</h2>
-                <p class="text-white/40 text-sm mt-2">Deploy media assets for dual-ratio display platform.</p>
+                <p class="text-white/40 text-sm mt-2">Inject assets into the cinematic stream.</p>
             </header>
 
             <div class="grid lg:grid-cols-2 gap-12">
-                <div class="admin-card p-10">
+                <!-- Form -->
+                <div class="admin-card p-10 border-white/5">
                     <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 flex items-center text-white/60">
                         <span id="form-mode-indicator" class="w-2 h-2 bg-[#0070ff] rounded-full mr-3"></span> 
-                        <span id="form-title">Ready for Transmission</span>
+                        <span id="form-title">New Transmission</span>
                     </h3>
                     
                     <input type="hidden" id="edit-id">
-                    <div class="space-y-5">
+                    <div class="space-y-6">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Movie Title</label>
-                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="Title">
+                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. ZERO POINT">
                             </div>
                             <div>
                                 <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Genre</label>
-                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="Genre">
+                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. SCI-FI">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Poster (9:16)</label>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster (9:16)</label>
                                 <div class="file-upload-zone ratio-portrait rounded-xl" onclick="document.getElementById('portrait-input').click()">
                                     <input type="file" id="portrait-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'portrait')">
                                     <div id="portrait-preview-container" class="hidden w-full h-full">
                                         <img id="portrait-preview" class="preview-img" src="">
                                     </div>
                                     <div id="portrait-placeholder" class="text-center p-4">
-                                        <p class="text-[8px] uppercase font-bold text-white/20">Portrait</p>
+                                        <p class="text-[8px] uppercase font-bold text-white/20">Drop Image</p>
                                     </div>
                                 </div>
                                 <input type="hidden" id="m-poster-portrait">
                             </div>
                             <div class="flex flex-col gap-4">
                                 <div>
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Backdrop (16:9)</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop (16:9)</label>
                                     <div class="file-upload-zone ratio-landscape rounded-xl" onclick="document.getElementById('landscape-input').click()">
                                         <input type="file" id="landscape-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'landscape')">
                                         <div id="landscape-preview-container" class="hidden w-full h-full">
                                             <img id="landscape-preview" class="preview-img" src="">
                                         </div>
                                         <div id="landscape-placeholder" class="text-center p-4">
-                                            <p class="text-[8px] uppercase font-bold text-white/20">Landscape</p>
+                                            <p class="text-[8px] uppercase font-bold text-white/20">Drop Image</p>
                                         </div>
                                     </div>
                                     <input type="hidden" id="m-poster-landscape">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">MP4 Filename</label>
-                                    <div class="file-upload-zone rounded-xl flex-1 h-[115px]" onclick="document.getElementById('video-input').click()">
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Asset Filename (MP4)</label>
+                                    <div class="file-upload-zone rounded-xl h-[120px]" onclick="document.getElementById('video-input').click()">
                                         <input type="file" id="video-input" accept="video/mp4" class="hidden" onchange="handleVideoUpload(this)">
-                                        <div id="video-status" class="text-center p-2">
-                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Select MP4</p>
+                                        <div id="video-status" class="text-center p-4">
+                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Attach .mp4</p>
                                         </div>
                                     </div>
                                     <input type="hidden" id="m-video-url">
@@ -205,46 +223,49 @@
 
                         <div>
                             <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Plot Synopsis</label>
-                            <textarea id="m-plot" class="w-full p-4 rounded-xl text-sm h-24" placeholder="Synopsis"></textarea>
+                            <textarea id="m-plot" class="w-full p-4 rounded-xl text-sm h-28" placeholder="The void consumes everything..."></textarea>
                         </div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility</label>
-                                <select id="m-target" class="w-full p-4 rounded-xl text-sm">
-                                    <option value="public">Public (index.html)</option>
-                                    <option value="premium">Premium (userindex)</option>
-                                    <option value="both">Global Release</option>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility Tier</label>
+                                <select id="m-target" class="w-full p-4 rounded-xl text-sm appearance-none cursor-pointer">
+                                    <option value="public">Public (Home)</option>
+                                    <option value="premium">Premium (Users)</option>
+                                    <option value="both">Global Access</option>
                                 </select>
                             </div>
                             <div class="flex items-end gap-2">
-                                <button id="btn-submit" onclick="saveMovie()" class="flex-1 bg-[#0070ff] text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-white hover:text-black transition-all">Push to GitHub</button>
-                                <button id="btn-cancel" onclick="resetForm()" class="hidden bg-white/10 px-4 rounded-xl text-[10px] font-bold uppercase">X</button>
+                                <button id="btn-submit" onclick="saveMovie()" class="flex-1 bg-[#0070ff] text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:shadow-[0_0_20px_rgba(0,112,255,0.4)] transition-all active:scale-95">Push to GitHub</button>
+                                <button id="btn-cancel" onclick="resetForm()" class="hidden bg-white/5 border border-white/10 px-6 rounded-xl text-[10px] font-black uppercase hover:bg-white/10">Cancel</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- List -->
                 <div>
-                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 opacity-40">Active Repository Assets</h3>
-                    <div id="admin-movie-list" class="space-y-4 max-h-[700px] overflow-y-auto pr-2">
-                        <div class="text-white/10 italic text-xs p-8 text-center">Syncing assets...</div>
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 opacity-40">Live Asset Repository</h3>
+                    <div id="admin-movie-list" class="space-y-4 max-h-[800px] overflow-y-auto pr-2">
+                        <div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">Synchronizing with cloud...</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- User View -->
         <div id="view-users" class="view-section">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Identity Database</h2>
-                <p class="text-white/40 text-sm mt-2">Active user registry from cloud authentication.</p>
+                <p class="text-white/40 text-sm mt-2">Active registry of platform operators.</p>
             </header>
-            <div class="admin-card overflow-hidden">
+            <div class="admin-card overflow-hidden border-white/5">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-white/5 text-[10px] uppercase tracking-[3px] text-white/40">
                         <tr>
                             <th class="p-6">Operator UID</th>
-                            <th class="p-6">Status</th>
-                            <th class="p-6">Last Active</th>
+                            <th class="p-6">Access Tier</th>
+                            <th class="p-6 text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody id="user-list" class="divide-y divide-white/5">
@@ -264,12 +285,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-streaming-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-platform-01';
 
         let user = null;
 
-        // AUTH & SYNC INITIALIZATION
-        const initAuth = async () => {
+        // AUTH INITIALIZATION
+        const startSession = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -277,7 +298,6 @@
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.error("Auth Error:", err);
                 document.getElementById('connection-text').innerText = "Auth Failed";
             }
         };
@@ -285,37 +305,37 @@
         onAuthStateChanged(auth, (u) => {
             user = u;
             if (user) {
-                document.getElementById('auth-uid').innerText = `ID: ${user.uid.substring(0,10)}...`;
+                document.getElementById('auth-uid').innerText = `ID: ${user.uid}`;
                 document.getElementById('connection-pulse').classList.replace('status-offline', 'status-online');
-                document.getElementById('connection-text').innerText = "GitHub Sync Active";
-                document.getElementById('connection-text').classList.replace('text-white/40', 'text-[#00ff41]');
-                loadCloudData();
+                document.getElementById('connection-text').innerText = "Repository Verified";
+                document.getElementById('connection-text').style.color = "#00ff41";
+                document.getElementById('stat-sync').innerText = "Verified";
+                initListeners();
             }
         });
 
-        initAuth();
+        startSession();
 
-        // DATA LOADING
-        function loadCloudData() {
+        // REAL-TIME DATA
+        function initListeners() {
             if (!user) return;
 
-            // Movie Listener
             const movieRef = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
             onSnapshot(movieRef, (snapshot) => {
                 const movies = [];
                 snapshot.forEach(doc => movies.push({ id: doc.id, ...doc.data() }));
-                renderMovies(movies);
+                renderMovieList(movies);
+                renderRecentList(movies);
                 document.getElementById('stat-movies').innerText = movies.length;
-            }, (err) => console.error("Firestore Error:", err));
+            }, (err) => console.error("Movie Stream Error:", err));
 
-            // User Listener
             const sessionRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
             onSnapshot(sessionRef, (snapshot) => {
                 const sessions = [];
                 snapshot.forEach(doc => sessions.push({ id: doc.id, ...doc.data() }));
-                renderUsers(sessions);
+                renderUserList(sessions);
                 document.getElementById('stat-users').innerText = sessions.length;
-            }, (err) => console.error("Session Error:", err));
+            });
         }
 
         // IMAGE HANDLERS
@@ -323,12 +343,12 @@
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = (e) => {
                     document.getElementById(`${type}-preview`).src = e.target.result;
                     document.getElementById(`${type}-preview-container`).classList.remove('hidden');
                     document.getElementById(`${type}-placeholder`).classList.add('hidden');
                     document.getElementById(`m-poster-${type}`).value = e.target.result;
-                }
+                };
                 reader.readAsDataURL(file);
             }
         };
@@ -338,8 +358,9 @@
             if (file) {
                 document.getElementById('video-filename').innerText = file.name;
                 document.getElementById('video-filename').style.color = "#00ff41";
-                const titleSlug = document.getElementById('m-title').value.toLowerCase().replace(/ /g, '-');
-                document.getElementById('m-video-url').value = `assets/movies/${titleSlug || 'release'}/${file.name}`;
+                const title = document.getElementById('m-title').value || 'release';
+                const slug = title.toLowerCase().replace(/ /g, '-');
+                document.getElementById('m-video-url').value = `assets/movies/${slug}/${file.name}`;
             }
         };
 
@@ -347,20 +368,20 @@
             if (!user) return;
             const id = document.getElementById('edit-id').value;
             const data = {
-                title: document.getElementById('m-title').value,
-                genre: document.getElementById('m-genre').value,
+                title: document.getElementById('m-title').value.toUpperCase(),
+                genre: document.getElementById('m-genre').value.toUpperCase(),
                 posterPortrait: document.getElementById('m-poster-portrait').value,
                 posterLandscape: document.getElementById('m-poster-landscape').value,
                 videoUrl: document.getElementById('m-video-url').value,
                 plot: document.getElementById('m-plot').value,
                 target: document.getElementById('m-target').value,
-                updatedAt: serverTimestamp()
+                timestamp: serverTimestamp()
             };
 
-            if (!data.title) return;
+            if (!data.title) return alert("Asset Title Required");
 
             const btn = document.getElementById('btn-submit');
-            btn.innerText = "COMMITTING...";
+            btn.innerText = "DEPLOYING...";
             btn.disabled = true;
 
             try {
@@ -370,86 +391,97 @@
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
                 }
                 resetForm();
-            } catch (err) { alert("Sync Error: " + err.message); }
+            } catch (err) { console.error("Deployment failed:", err); }
+            btn.innerText = "Push to GitHub";
             btn.disabled = false;
         };
 
-        function renderMovies(movies) {
+        function renderMovieList(movies) {
             const list = document.getElementById('admin-movie-list');
             if (!movies.length) {
-                list.innerHTML = `<div class="text-white/10 italic text-xs p-8 text-center border border-white/5 rounded-2xl">No assets deployed yet.</div>`;
+                list.innerHTML = `<div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">No assets deployed.</div>`;
                 return;
             }
-            list.innerHTML = movies.map(movie => `
+            list.innerHTML = movies.map(m => `
                 <div class="admin-card p-4 flex items-center justify-between border-white/5 group">
-                    <div class="flex items-center">
-                        <div class="flex gap-2 mr-4">
-                            <img src="${movie.posterPortrait || 'https://via.placeholder.com/150'}" class="w-10 h-14 object-cover rounded bg-white/10">
-                            <img src="${movie.posterLandscape || 'https://via.placeholder.com/150'}" class="w-20 h-14 object-cover rounded bg-white/10">
-                        </div>
+                    <div class="flex items-center space-x-4">
+                        <img src="${m.posterPortrait || 'https://via.placeholder.com/150'}" class="w-10 h-14 object-cover rounded-lg bg-white/5 shadow-xl">
                         <div>
-                            <p class="text-xs font-bold uppercase text-white">${movie.title}</p>
-                            <div class="flex gap-2 mt-1">
-                                <span class="text-[7px] uppercase font-black bg-white/10 text-white/40 px-1.5 py-0.5 rounded">${movie.target}</span>
-                                <span class="github-tag">${movie.videoUrl?.split('/').pop() || 'media'}</span>
+                            <p class="text-xs font-black text-white">${m.title}</p>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="github-tag">${m.target.toUpperCase()}</span>
+                                <span class="text-[8px] text-white/30 uppercase font-bold">${m.genre}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="editMovie('${movie.id}')" class="text-[9px] uppercase font-bold text-[#0070ff]">Edit</button>
-                        <button onclick="deleteMovie('${movie.id}')" class="text-[9px] uppercase font-bold text-[#ff3e00]">Purge</button>
+                    <div class="flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity pr-4">
+                        <button onclick="editMovie('${m.id}')" class="text-[9px] font-black uppercase text-[#0070ff] tracking-widest">Edit</button>
+                        <button onclick="deleteMovie('${m.id}')" class="text-[9px] font-black uppercase text-[#ff3e00] tracking-widest">Purge</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderUsers(sessions) {
+        function renderRecentList(movies) {
+            const list = document.getElementById('dashboard-recent-list');
+            const recent = movies.sort((a,b) => b.timestamp - a.timestamp).slice(0,3);
+            if(!recent.length) return;
+            list.innerHTML = recent.map(m => `
+                <div class="flex items-center justify-between text-xs py-2 border-b border-white/5">
+                    <span class="text-white font-bold">${m.title}</span>
+                    <span class="text-white/20 uppercase text-[9px]">Deployed to ${m.target}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderUserList(sessions) {
             const list = document.getElementById('user-list');
-            list.innerHTML = sessions.map(session => `
-                <tr>
-                    <td class="p-6 font-mono text-xs text-white/60">${session.userId || 'ANONYMOUS'}</td>
-                    <td class="p-6"><span class="px-3 py-1 bg-[#00ff41]/10 text-[#00ff41] rounded-full text-[9px] font-bold uppercase">Active</span></td>
-                    <td class="p-6 text-white/40 text-[10px]">${session.timestamp?.toDate().toLocaleString() || 'Just now'}</td>
+            list.innerHTML = sessions.map(s => `
+                <tr class="group hover:bg-white/[0.02] transition-colors">
+                    <td class="p-6 font-mono text-xs text-white/40">${s.userId || 'GUEST-SESSION'}</td>
+                    <td class="p-6 text-[10px] font-black text-white/60 uppercase">System Operator</td>
+                    <td class="p-6 text-right"><span class="px-3 py-1 bg-[#00ff41]/10 text-[#00ff41] rounded-full text-[8px] font-black uppercase">Active</span></td>
                 </tr>
             `).join('');
         }
 
         window.editMovie = async function(id) {
-            const movieSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
-            if (movieSnap.exists()) {
-                const data = movieSnap.data();
+            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
+            if (snap.exists()) {
+                const d = snap.data();
                 document.getElementById('edit-id').value = id;
-                document.getElementById('m-title').value = data.title;
-                document.getElementById('m-genre').value = data.genre;
-                document.getElementById('m-poster-portrait').value = data.posterPortrait || "";
-                document.getElementById('m-poster-landscape').value = data.posterLandscape || "";
-                document.getElementById('m-video-url').value = data.videoUrl || "";
-                document.getElementById('m-plot').value = data.plot;
-                document.getElementById('m-target').value = data.target;
+                document.getElementById('m-title').value = d.title;
+                document.getElementById('m-genre').value = d.genre;
+                document.getElementById('m-poster-portrait').value = d.posterPortrait;
+                document.getElementById('m-poster-landscape').value = d.posterLandscape;
+                document.getElementById('m-video-url').value = d.videoUrl;
+                document.getElementById('m-plot').value = d.plot;
+                document.getElementById('m-target').value = d.target;
 
-                if(data.posterPortrait) {
-                    document.getElementById('portrait-preview').src = data.posterPortrait;
+                if(d.posterPortrait) {
+                    document.getElementById('portrait-preview').src = d.posterPortrait;
                     document.getElementById('portrait-preview-container').classList.remove('hidden');
                     document.getElementById('portrait-placeholder').classList.add('hidden');
                 }
-                if(data.posterLandscape) {
-                    document.getElementById('landscape-preview').src = data.posterLandscape;
+                if(d.posterLandscape) {
+                    document.getElementById('landscape-preview').src = d.posterLandscape;
                     document.getElementById('landscape-preview-container').classList.remove('hidden');
                     document.getElementById('landscape-placeholder').classList.add('hidden');
                 }
-                if(data.videoUrl) {
-                    document.getElementById('video-filename').innerText = data.videoUrl.split('/').pop();
+                if(d.videoUrl) {
+                    document.getElementById('video-filename').innerText = d.videoUrl.split('/').pop();
                     document.getElementById('video-filename').style.color = "#00ff41";
                 }
 
-                document.getElementById('form-title').innerText = "Asset in Modification";
-                document.getElementById('btn-submit').innerText = "Update Repository";
+                document.getElementById('form-title').innerText = "Modifying Asset";
+                document.getElementById('btn-submit').innerText = "Push Changes";
                 document.getElementById('btn-cancel').classList.remove('hidden');
+                switchView('editor');
             }
         };
 
         window.deleteMovie = async function(id) {
-            if (confirm("Delete this asset from cloud storage?")) {
+            if (confirm("Permanently purge this asset from the repository?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
             }
         };
@@ -462,24 +494,23 @@
             document.getElementById('m-poster-landscape').value = "";
             document.getElementById('m-video-url').value = "";
             document.getElementById('m-plot').value = "";
-            document.getElementById('m-target').value = "public";
             document.getElementById('portrait-preview-container').classList.add('hidden');
             document.getElementById('portrait-placeholder').classList.remove('hidden');
             document.getElementById('landscape-preview-container').classList.add('hidden');
             document.getElementById('landscape-placeholder').classList.remove('hidden');
-            document.getElementById('video-filename').innerText = "Select MP4";
+            document.getElementById('video-filename').innerText = "Attach .mp4";
             document.getElementById('video-filename').style.color = "";
-            document.getElementById('form-title').innerText = "Ready for Transmission";
+            document.getElementById('form-title').innerText = "New Transmission";
             document.getElementById('btn-submit').innerText = "Push to GitHub";
             document.getElementById('btn-cancel').classList.add('hidden');
         };
 
-        window.switchView = function(viewId) {
+        window.switchView = function(id) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-                if(item.dataset.view === viewId) item.classList.add('active');
+            document.getElementById(`view-${id}`).classList.add('active');
+            document.querySelectorAll('.sidebar-item').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.view === id) s.classList.add('active');
             });
         };
     </script>

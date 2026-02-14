@@ -43,6 +43,7 @@
         .status-pulse { width: 10px; height: 10px; border-radius: 50%; }
         .status-online { background: #00ff41; box-shadow: 0 0 10px #00ff41; animation: pulse 2s infinite; }
         .status-offline { background: #ff3e00; box-shadow: 0 0 10px #ff3e00; }
+        .status-warn { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
@@ -57,10 +58,7 @@
             justify-content: center;
             background: rgba(255,255,255,0.01);
         }
-        .file-upload-zone:hover {
-            border-color: var(--admin-blue);
-            background: rgba(0, 112, 255, 0.05);
-        }
+        .file-upload-zone:hover { border-color: var(--admin-blue); background: rgba(0, 112, 255, 0.05); }
         
         .preview-img { width: 100%; height: 100%; object-fit: cover; }
         .ratio-portrait { aspect-ratio: 9/16; }
@@ -75,12 +73,6 @@
             font-family: monospace;
             border: 1px solid rgba(255,255,255,0.1);
         }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--admin-blue); }
     </style>
 </head>
 <body>
@@ -91,7 +83,7 @@
                 <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#0070ff]">.</span></h1>
                 <div class="flex items-center mt-2">
                     <div id="connection-pulse" class="status-pulse status-offline mr-2"></div>
-                    <span id="connection-text" class="text-[8px] uppercase tracking-[3px] text-white/40 font-bold">Verifying...</span>
+                    <span id="connection-text" class="text-[8px] uppercase tracking-[3px] text-white/40 font-bold">Initializing...</span>
                 </div>
             </div>
 
@@ -113,7 +105,7 @@
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0070ff] to-[#00c6ff] flex items-center justify-center font-black text-xs text-white">AD</div>
                 <div class="ml-3 hidden lg:block overflow-hidden">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-white">Root Admin</p>
-                    <p class="text-[8px] text-white/40 truncate" id="auth-uid">ID: Authenticating...</p>
+                    <p class="text-[8px] text-white/40 truncate" id="auth-uid">ID: Loading...</p>
                 </div>
             </div>
             <a href="index.html" class="block w-full py-3 text-center text-[9px] uppercase tracking-[3px] text-white/20 hover:text-[#ff3e00] transition-colors">Disconnect</a>
@@ -122,11 +114,10 @@
 
     <main class="ml-20 lg:ml-64 p-8 lg:p-16">
         
-        <!-- Dashboard View -->
         <div id="view-dashboard" class="view-section active">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">System Overview</h2>
-                <p class="text-white/40 text-sm mt-2">Managing repository: <span class="text-blue-400">manaskrishnnapranavam-sys/Void</span></p>
+                <p class="text-white/40 text-sm mt-2">Linked Repository: <span class="text-blue-400">manaskrishnnapranavam-sys/Void</span></p>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -135,32 +126,30 @@
                     <p class="text-5xl font-black premium-font" id="stat-movies">0</p>
                 </div>
                 <div class="admin-card p-8 border-white/5">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Active Sessions</p>
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Active Operators</p>
                     <p class="text-5xl font-black premium-font" id="stat-users">0</p>
                 </div>
                 <div class="admin-card p-8 border-white/5">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Network Status</p>
-                    <p class="text-5xl font-black premium-font text-[#00ff41]" id="stat-sync">Online</p>
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Sync Status</p>
+                    <p class="text-5xl font-black premium-font" id="stat-sync">Pending</p>
                 </div>
             </div>
 
             <div class="admin-card p-10 border-white/5">
                 <h4 class="premium-font text-xs font-bold uppercase tracking-[4px] text-white/40 mb-6">Recent Deployments</h4>
                 <div id="dashboard-recent-list" class="space-y-4">
-                    <p class="text-white/20 italic text-xs">Waiting for data stream...</p>
+                    <p class="text-white/20 italic text-xs">Waiting for GitHub sync...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Editor View -->
         <div id="view-editor" class="view-section">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Admin Editor</h2>
-                <p class="text-white/40 text-sm mt-2">Inject assets into the cinematic stream.</p>
+                <p class="text-white/40 text-sm mt-2">Deploy new cinematic assets to the repository.</p>
             </header>
 
             <div class="grid lg:grid-cols-2 gap-12">
-                <!-- Form -->
                 <div class="admin-card p-10 border-white/5">
                     <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 flex items-center text-white/60">
                         <span id="form-mode-indicator" class="w-2 h-2 bg-[#0070ff] rounded-full mr-3"></span> 
@@ -172,48 +161,48 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Movie Title</label>
-                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. ZERO POINT">
+                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. DARK MATTER">
                             </div>
                             <div>
                                 <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Genre</label>
-                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. SCI-FI">
+                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. THRILLER">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster (9:16)</label>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster</label>
                                 <div class="file-upload-zone ratio-portrait rounded-xl" onclick="document.getElementById('portrait-input').click()">
                                     <input type="file" id="portrait-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'portrait')">
                                     <div id="portrait-preview-container" class="hidden w-full h-full">
                                         <img id="portrait-preview" class="preview-img" src="">
                                     </div>
                                     <div id="portrait-placeholder" class="text-center p-4">
-                                        <p class="text-[8px] uppercase font-bold text-white/20">Drop Image</p>
+                                        <p class="text-[8px] uppercase font-bold text-white/20">Select File</p>
                                     </div>
                                 </div>
                                 <input type="hidden" id="m-poster-portrait">
                             </div>
                             <div class="flex flex-col gap-4">
                                 <div>
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop (16:9)</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop</label>
                                     <div class="file-upload-zone ratio-landscape rounded-xl" onclick="document.getElementById('landscape-input').click()">
                                         <input type="file" id="landscape-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'landscape')">
                                         <div id="landscape-preview-container" class="hidden w-full h-full">
                                             <img id="landscape-preview" class="preview-img" src="">
                                         </div>
                                         <div id="landscape-placeholder" class="text-center p-4">
-                                            <p class="text-[8px] uppercase font-bold text-white/20">Drop Image</p>
+                                            <p class="text-[8px] uppercase font-bold text-white/20">Select File</p>
                                         </div>
                                     </div>
                                     <input type="hidden" id="m-poster-landscape">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Asset Filename (MP4)</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Asset Filename (.mp4)</label>
                                     <div class="file-upload-zone rounded-xl h-[120px]" onclick="document.getElementById('video-input').click()">
                                         <input type="file" id="video-input" accept="video/mp4" class="hidden" onchange="handleVideoUpload(this)">
                                         <div id="video-status" class="text-center p-4">
-                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Attach .mp4</p>
+                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Attach Movie</p>
                                         </div>
                                     </div>
                                     <input type="hidden" id="m-video-url">
@@ -222,17 +211,17 @@
                         </div>
 
                         <div>
-                            <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Plot Synopsis</label>
-                            <textarea id="m-plot" class="w-full p-4 rounded-xl text-sm h-28" placeholder="The void consumes everything..."></textarea>
+                            <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Plot Summary</label>
+                            <textarea id="m-plot" class="w-full p-4 rounded-xl text-sm h-28" placeholder="Enter story details..."></textarea>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility Tier</label>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility</label>
                                 <select id="m-target" class="w-full p-4 rounded-xl text-sm appearance-none cursor-pointer">
-                                    <option value="public">Public (Home)</option>
-                                    <option value="premium">Premium (Users)</option>
-                                    <option value="both">Global Access</option>
+                                    <option value="public">Standard</option>
+                                    <option value="premium">Premium Only</option>
+                                    <option value="both">Global</option>
                                 </select>
                             </div>
                             <div class="flex items-end gap-2">
@@ -243,28 +232,26 @@
                     </div>
                 </div>
 
-                <!-- List -->
                 <div>
-                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 opacity-40">Live Asset Repository</h3>
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 opacity-40">Deployed Assets</h3>
                     <div id="admin-movie-list" class="space-y-4 max-h-[800px] overflow-y-auto pr-2">
-                        <div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">Synchronizing with cloud...</div>
+                        <div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">Initializing cloud stream...</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- User View -->
         <div id="view-users" class="view-section">
             <header class="mb-12">
-                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Identity Database</h2>
-                <p class="text-white/40 text-sm mt-2">Active registry of platform operators.</p>
+                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Operator Registry</h2>
+                <p class="text-white/40 text-sm mt-2">Historical log of authenticated system access.</p>
             </header>
             <div class="admin-card overflow-hidden border-white/5">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-white/5 text-[10px] uppercase tracking-[3px] text-white/40">
                         <tr>
-                            <th class="p-6">Operator UID</th>
-                            <th class="p-6">Access Tier</th>
+                            <th class="p-6">Operator ID</th>
+                            <th class="p-6">Access Group</th>
                             <th class="p-6 text-right">Status</th>
                         </tr>
                     </thead>
@@ -281,16 +268,20 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // CONFIGURATION
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-platform-01';
+        
+        // DYNAMIC REPO PATHING
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-master-system';
 
         let user = null;
+        let connectionRetry = 0;
 
-        // AUTH INITIALIZATION
-        const startSession = async () => {
+        // AUTHENTICATION LOOP
+        const authenticate = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -298,48 +289,61 @@
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                document.getElementById('connection-text').innerText = "Auth Failed";
+                console.error("Auth Error:", err);
+                document.getElementById('connection-text').innerText = "Auth Offline";
+                document.getElementById('connection-pulse').classList.add('status-offline');
             }
         };
 
         onAuthStateChanged(auth, (u) => {
             user = u;
             if (user) {
-                document.getElementById('auth-uid').innerText = `ID: ${user.uid}`;
-                document.getElementById('connection-pulse').classList.replace('status-offline', 'status-online');
-                document.getElementById('connection-text').innerText = "Repository Verified";
+                document.getElementById('auth-uid').innerText = `ID: ${user.uid.substring(0,8)}...`;
+                document.getElementById('connection-pulse').className = 'status-pulse status-online mr-2';
+                document.getElementById('connection-text').innerText = "GitHub Connected";
                 document.getElementById('connection-text').style.color = "#00ff41";
-                document.getElementById('stat-sync').innerText = "Verified";
-                initListeners();
+                document.getElementById('stat-sync').innerText = "Live";
+                document.getElementById('stat-sync').style.color = "#00ff41";
+                
+                // Track this admin session
+                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', user.uid), {
+                    userId: user.uid,
+                    lastSeen: serverTimestamp()
+                }, { merge: true });
+
+                initDataStreams();
             }
         });
 
-        startSession();
-
-        // REAL-TIME DATA
-        function initListeners() {
+        // DATA FLOW
+        function initDataStreams() {
             if (!user) return;
 
+            // Movies Stream
             const movieRef = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
             onSnapshot(movieRef, (snapshot) => {
                 const movies = [];
                 snapshot.forEach(doc => movies.push({ id: doc.id, ...doc.data() }));
-                renderMovieList(movies);
-                renderRecentList(movies);
+                renderMovies(movies);
                 document.getElementById('stat-movies').innerText = movies.length;
-            }, (err) => console.error("Movie Stream Error:", err));
+            }, (err) => {
+                console.warn("Retrying collection link...", err);
+                // If the collection doesn't exist yet, we stay in 'Ready' mode
+                document.getElementById('stat-movies').innerText = "0";
+            });
 
+            // Sessions Stream
             const sessionRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
             onSnapshot(sessionRef, (snapshot) => {
                 const sessions = [];
                 snapshot.forEach(doc => sessions.push({ id: doc.id, ...doc.data() }));
-                renderUserList(sessions);
+                renderSessions(sessions);
                 document.getElementById('stat-users').innerText = sessions.length;
             });
         }
 
-        // IMAGE HANDLERS
-        window.handleImageUpload = function(input, type) {
+        // HANDLERS
+        window.handleImageUpload = (input, type) => {
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -353,18 +357,18 @@
             }
         };
 
-        window.handleVideoUpload = function(input) {
+        window.handleVideoUpload = (input) => {
             const file = input.files[0];
             if (file) {
                 document.getElementById('video-filename').innerText = file.name;
                 document.getElementById('video-filename').style.color = "#00ff41";
-                const title = document.getElementById('m-title').value || 'release';
+                const title = document.getElementById('m-title').value || 'movie';
                 const slug = title.toLowerCase().replace(/ /g, '-');
                 document.getElementById('m-video-url').value = `assets/movies/${slug}/${file.name}`;
             }
         };
 
-        window.saveMovie = async function() {
+        window.saveMovie = async () => {
             if (!user) return;
             const id = document.getElementById('edit-id').value;
             const data = {
@@ -381,7 +385,7 @@
             if (!data.title) return alert("Asset Title Required");
 
             const btn = document.getElementById('btn-submit');
-            btn.innerText = "DEPLOYING...";
+            btn.innerText = "PUSHING...";
             btn.disabled = true;
 
             try {
@@ -391,61 +395,58 @@
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
                 }
                 resetForm();
-            } catch (err) { console.error("Deployment failed:", err); }
+                switchView('dashboard');
+            } catch (err) { alert("Push failed. Check connection."); }
             btn.innerText = "Push to GitHub";
             btn.disabled = false;
         };
 
-        function renderMovieList(movies) {
+        function renderMovies(movies) {
             const list = document.getElementById('admin-movie-list');
+            const dashboardList = document.getElementById('dashboard-recent-list');
+            
             if (!movies.length) {
-                list.innerHTML = `<div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">No assets deployed.</div>`;
+                list.innerHTML = `<div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">Repository Empty. Ready for deployment.</div>`;
                 return;
             }
+
             list.innerHTML = movies.map(m => `
                 <div class="admin-card p-4 flex items-center justify-between border-white/5 group">
                     <div class="flex items-center space-x-4">
-                        <img src="${m.posterPortrait || 'https://via.placeholder.com/150'}" class="w-10 h-14 object-cover rounded-lg bg-white/5 shadow-xl">
+                        <img src="${m.posterPortrait || 'https://via.placeholder.com/150'}" class="w-10 h-14 object-cover rounded-lg bg-white/5">
                         <div>
                             <p class="text-xs font-black text-white">${m.title}</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <span class="github-tag">${m.target.toUpperCase()}</span>
-                                <span class="text-[8px] text-white/30 uppercase font-bold">${m.genre}</span>
-                            </div>
+                            <span class="github-tag mt-1 block w-fit uppercase font-bold text-[8px]">${m.target}</span>
                         </div>
                     </div>
-                    <div class="flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity pr-4">
-                        <button onclick="editMovie('${m.id}')" class="text-[9px] font-black uppercase text-[#0070ff] tracking-widest">Edit</button>
-                        <button onclick="deleteMovie('${m.id}')" class="text-[9px] font-black uppercase text-[#ff3e00] tracking-widest">Purge</button>
+                    <div class="flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editMovie('${m.id}')" class="text-[9px] font-black uppercase text-[#0070ff]">Edit</button>
+                        <button onclick="deleteMovie('${m.id}')" class="text-[9px] font-black uppercase text-[#ff3e00]">Purge</button>
                     </div>
                 </div>
             `).join('');
-        }
 
-        function renderRecentList(movies) {
-            const list = document.getElementById('dashboard-recent-list');
-            const recent = movies.sort((a,b) => b.timestamp - a.timestamp).slice(0,3);
-            if(!recent.length) return;
-            list.innerHTML = recent.map(m => `
+            const sorted = [...movies].sort((a,b) => b.timestamp - a.timestamp).slice(0,3);
+            dashboardList.innerHTML = sorted.map(m => `
                 <div class="flex items-center justify-between text-xs py-2 border-b border-white/5">
                     <span class="text-white font-bold">${m.title}</span>
-                    <span class="text-white/20 uppercase text-[9px]">Deployed to ${m.target}</span>
+                    <span class="text-white/20 uppercase text-[9px]">Deployed to GitHub</span>
                 </div>
             `).join('');
         }
 
-        function renderUserList(sessions) {
+        function renderSessions(sessions) {
             const list = document.getElementById('user-list');
             list.innerHTML = sessions.map(s => `
-                <tr class="group hover:bg-white/[0.02] transition-colors">
-                    <td class="p-6 font-mono text-xs text-white/40">${s.userId || 'GUEST-SESSION'}</td>
-                    <td class="p-6 text-[10px] font-black text-white/60 uppercase">System Operator</td>
+                <tr class="group hover:bg-white/[0.02]">
+                    <td class="p-6 font-mono text-xs text-white/40">${s.userId}</td>
+                    <td class="p-6 text-[10px] font-black text-white/60 uppercase">Admin Operator</td>
                     <td class="p-6 text-right"><span class="px-3 py-1 bg-[#00ff41]/10 text-[#00ff41] rounded-full text-[8px] font-black uppercase">Active</span></td>
                 </tr>
             `).join('');
         }
 
-        window.editMovie = async function(id) {
+        window.editMovie = async (id) => {
             const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
             if (snap.exists()) {
                 const d = snap.data();
@@ -463,30 +464,21 @@
                     document.getElementById('portrait-preview-container').classList.remove('hidden');
                     document.getElementById('portrait-placeholder').classList.add('hidden');
                 }
-                if(d.posterLandscape) {
-                    document.getElementById('landscape-preview').src = d.posterLandscape;
-                    document.getElementById('landscape-preview-container').classList.remove('hidden');
-                    document.getElementById('landscape-placeholder').classList.add('hidden');
-                }
-                if(d.videoUrl) {
-                    document.getElementById('video-filename').innerText = d.videoUrl.split('/').pop();
-                    document.getElementById('video-filename').style.color = "#00ff41";
-                }
-
+                
                 document.getElementById('form-title').innerText = "Modifying Asset";
-                document.getElementById('btn-submit').innerText = "Push Changes";
+                document.getElementById('btn-submit').innerText = "Update GitHub";
                 document.getElementById('btn-cancel').classList.remove('hidden');
                 switchView('editor');
             }
         };
 
-        window.deleteMovie = async function(id) {
-            if (confirm("Permanently purge this asset from the repository?")) {
+        window.deleteMovie = async (id) => {
+            if (confirm("Delete this asset forever?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
             }
         };
 
-        window.resetForm = function() {
+        window.resetForm = () => {
             document.getElementById('edit-id').value = "";
             document.getElementById('m-title').value = "";
             document.getElementById('m-genre').value = "";
@@ -496,16 +488,14 @@
             document.getElementById('m-plot').value = "";
             document.getElementById('portrait-preview-container').classList.add('hidden');
             document.getElementById('portrait-placeholder').classList.remove('hidden');
-            document.getElementById('landscape-preview-container').classList.add('hidden');
-            document.getElementById('landscape-placeholder').classList.remove('hidden');
-            document.getElementById('video-filename').innerText = "Attach .mp4";
+            document.getElementById('video-filename').innerText = "Attach Movie";
             document.getElementById('video-filename').style.color = "";
             document.getElementById('form-title').innerText = "New Transmission";
             document.getElementById('btn-submit').innerText = "Push to GitHub";
             document.getElementById('btn-cancel').classList.add('hidden');
         };
 
-        window.switchView = function(id) {
+        window.switchView = (id) => {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${id}`).classList.add('active');
             document.querySelectorAll('.sidebar-item').forEach(s => {
@@ -513,6 +503,8 @@
                 if(s.dataset.view === id) s.classList.add('active');
             });
         };
+
+        authenticate();
     </script>
 </body>
 </html>

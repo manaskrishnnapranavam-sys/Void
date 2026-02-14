@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOID | Playback Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Integration with your main database file -->
     <script src="void_data.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #ff3e00;
@@ -17,7 +18,7 @@
         .premium-font { font-family: 'Outfit', sans-serif; }
 
         .player-wrapper { position: relative; width: 100vw; height: 100vh; background: #000; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: contain; }
+        video { width: 100%; height: 100%; object-fit: contain; z-index: 1; }
 
         /* UI Overlays */
         .ui-layer { 
@@ -30,42 +31,58 @@
         /* End Screen */
         #end-screen {
             position: absolute; inset: 0; background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(20px); z-index: 50; display: none;
+            backdrop-filter: blur(30px); z-index: 50; display: none;
             flex-direction: column; align-items: center; justify-content: center;
             animation: fadeIn 0.8s ease;
         }
 
-        .star-rating button { transition: transform 0.2s; color: rgba(255,255,255,0.2); }
-        .star-rating button:hover, .star-rating button.active { color: var(--accent); transform: scale(1.2); }
+        .star-rating button { transition: all 0.2s ease; color: rgba(255,255,255,0.1); }
+        .star-rating button:hover, .star-rating button.selected { color: var(--accent); transform: scale(1.3); text-shadow: 0 0 15px var(--accent); }
 
         .recommendation-card { 
-            width: 200px; transition: all 0.4s ease; 
-            filter: grayscale(1) opacity(0.5);
+            width: 180px; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); 
+            filter: grayscale(1) opacity(0.4);
         }
         .recommendation-card:hover { 
-            filter: grayscale(0) opacity(1); transform: translateY(-10px); 
+            filter: grayscale(0) opacity(1); transform: translateY(-10px) scale(1.05); 
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         /* Custom Video Progress Bar */
-        .progress-bar {
-            height: 4px; background: rgba(255,255,255,0.1);
-            position: absolute; bottom: 100px; left: 40px; right: 40px;
-            cursor: pointer; border-radius: 2px;
+        .progress-bar-container {
+            height: 6px; background: rgba(255,255,255,0.1);
+            position: absolute; bottom: 100px; left: 60px; right: 60px;
+            cursor: pointer; border-radius: 10px; overflow: hidden;
+            transition: height 0.2s;
         }
+        .progress-bar-container:hover { height: 10px; }
+        
         #current-progress {
             height: 100%; background: var(--accent); width: 0%;
-            box-shadow: 0 0 15px var(--accent); border-radius: 2px;
+            box-shadow: 0 0 20px var(--accent); border-radius: 10px;
+        }
+
+        /* Error Message Style */
+        #error-overlay {
+            position: absolute; inset: 0; background: #000; z-index: 100;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
     </style>
 </head>
 <body>
 
+    <div id="error-overlay">
+        <h2 class="premium-font text-4xl font-black text-[#ff3e00] mb-4">MEDIA_OFFLINE</h2>
+        <p class="text-white/40 uppercase tracking-[4px] text-[10px] mb-8">Protocol could not locate the mp4 source file</p>
+        <a href="index.html" class="px-8 py-3 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-[2px] hover:bg-white hover:text-black transition-all">Return to Dashboard</a>
+    </div>
+
     <div class="player-wrapper" id="player-container">
         <!-- The Video Engine -->
-        <video id="main-video" autoplay>
+        <video id="main-video" preload="auto">
             <source id="video-source" src="" type="video/mp4">
+            Your browser does not support the video tag.
         </video>
 
         <!-- UI HUD -->
@@ -78,37 +95,47 @@
                 
                 <div class="flex items-center space-x-6">
                     <div class="text-right">
-                        <p id="player-title" class="premium-font text-2xl font-black uppercase tracking-tighter">Initializing...</p>
-                        <p id="quality-label" class="text-[9px] text-[#ff3e00] font-bold uppercase tracking-[2px]">4K Lossless</p>
+                        <p id="player-title" class="premium-font text-2xl font-black uppercase tracking-tighter">Syncing Database...</p>
+                        <p id="quality-label" class="text-[9px] text-[#ff3e00] font-bold uppercase tracking-[2px]">Encrypted Stream • 4K</p>
                     </div>
                 </div>
             </div>
 
             <!-- Controls Area -->
-            <div class="absolute bottom-0 left-0 w-full p-10">
-                <div class="flex items-end justify-between mb-8">
-                    <div>
-                        <button onclick="togglePlay()" id="play-pause-btn" class="text-white hover:text-[#ff3e00] transition-colors">
-                            <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <div class="absolute bottom-0 left-0 w-full p-10 pb-16">
+                <div class="flex items-center justify-between mb-8 px-6">
+                    <div class="flex items-center space-x-10">
+                        <button onclick="togglePlay()" id="play-pause-btn" class="text-white hover:text-[#ff3e00] transition-all transform hover:scale-110">
+                            <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
+                        
+                        <div class="flex items-center space-x-4 text-[11px] font-mono text-white/50">
+                            <span id="time-current">00:00</span>
+                            <span class="opacity-20">/</span>
+                            <span id="time-total">00:00</span>
+                        </div>
                     </div>
                     
-                    <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-12">
                         <div class="group relative">
-                            <button class="text-[10px] font-black uppercase tracking-[3px] text-white/40 hover:text-white">Quality</button>
-                            <div class="absolute bottom-full right-0 mb-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl p-4 hidden group-hover:block w-32">
-                                <button class="block w-full text-left text-[9px] py-2 text-[#ff3e00]">2160p (4K)</button>
-                                <button class="block w-full text-left text-[9px] py-2 opacity-40">1080p (HD)</button>
-                                <button class="block w-full text-left text-[9px] py-2 opacity-40">720p (SD)</button>
+                            <button class="text-[10px] font-black uppercase tracking-[3px] text-white/40 hover:text-white transition-colors">Visual Quality</button>
+                            <div class="absolute bottom-full right-0 mb-6 bg-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 hidden group-hover:block w-40 shadow-2xl">
+                                <button class="flex items-center justify-between w-full text-left text-[9px] font-bold py-3 text-[#ff3e00] uppercase tracking-widest">
+                                    <span>2160p Ultra</span>
+                                    <div class="w-1 h-1 bg-[#ff3e00] rounded-full"></div>
+                                </button>
+                                <button class="block w-full text-left text-[9px] font-bold py-3 opacity-40 hover:opacity-100 uppercase tracking-widest transition-all">1080p High</button>
+                                <button class="block w-full text-left text-[9px] font-bold py-3 opacity-40 hover:opacity-100 uppercase tracking-widest transition-all">720p Data Save</button>
                             </div>
                         </div>
-                        <button onclick="toggleFullscreen()" class="text-white/40 hover:text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2"/></svg>
+                        
+                        <button onclick="toggleFullscreen()" class="text-white/40 hover:text-white transition-all transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5"/></svg>
                         </button>
                     </div>
                 </div>
                 
-                <div class="progress-bar" id="progress-container">
+                <div class="progress-bar-container" id="progress-container">
                     <div id="current-progress"></div>
                 </div>
             </div>
@@ -116,27 +143,35 @@
 
         <!-- End of Video Screen -->
         <div id="end-screen">
-            <h2 class="premium-font text-5xl font-black uppercase tracking-tighter mb-2">Transmission Complete</h2>
-            <p class="text-white/40 text-xs uppercase tracking-[4px] mb-12">How was the experience?</p>
+            <div class="text-center mb-16">
+                <h2 class="premium-font text-6xl font-black uppercase tracking-tighter mb-4">Protocol Finished</h2>
+                <p class="text-white/30 text-[10px] uppercase tracking-[6px]">Evaluate the neural experience</p>
+            </div>
 
             <!-- Rating System -->
-            <div class="star-rating flex space-x-4 mb-20">
-                <button onclick="rate(1)" class="text-4xl">✦</button>
-                <button onclick="rate(2)" class="text-4xl">✦</button>
-                <button onclick="rate(3)" class="text-4xl">✦</button>
-                <button onclick="rate(4)" class="text-4xl">✦</button>
-                <button onclick="rate(5)" class="text-4xl">✦</button>
+            <div class="star-rating flex space-x-6 mb-24" id="rating-stars">
+                <button onclick="rate(1)" class="text-5xl">✦</button>
+                <button onclick="rate(2)" class="text-5xl">✦</button>
+                <button onclick="rate(3)" class="text-5xl">✦</button>
+                <button onclick="rate(4)" class="text-5xl">✦</button>
+                <button onclick="rate(5)" class="text-5xl">✦</button>
             </div>
 
             <!-- Watch More Section -->
-            <div class="w-full px-20">
-                <p class="text-[10px] font-black uppercase tracking-[5px] text-white/20 mb-8 text-center">Protocol Suggestions</p>
-                <div id="more-movies" class="flex justify-center space-x-8">
-                    <!-- Dynamic recommendations will load here -->
+            <div class="w-full px-20 max-w-7xl">
+                <div class="flex items-center justify-between mb-10">
+                    <p class="text-[11px] font-black uppercase tracking-[6px] text-[#ff3e00]">Next Up in VOID</p>
+                    <div class="h-[1px] flex-grow mx-10 bg-white/10"></div>
+                </div>
+                <div id="more-movies" class="flex justify-center space-x-10">
+                    <!-- Dynamic recommendations from void_data.js -->
                 </div>
             </div>
 
-            <button onclick="location.reload()" class="mt-16 text-[10px] font-black uppercase tracking-[4px] text-white/20 hover:text-white transition-all">Replay Transmission</button>
+            <div class="flex space-x-12 mt-20">
+                <button onclick="location.reload()" class="text-[10px] font-black uppercase tracking-[4px] text-white/40 hover:text-white transition-all border-b border-white/0 hover:border-white pb-1">Replay</button>
+                <a href="index.html" class="text-[10px] font-black uppercase tracking-[4px] text-white/40 hover:text-white transition-all border-b border-white/0 hover:border-white pb-1">Exit to Menu</a>
+            </div>
         </div>
     </div>
 
@@ -146,68 +181,91 @@
         const hud = document.getElementById('hud');
         let currentMovie = null;
 
-        function loadVideo() {
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function loadVideoFromDB() {
+            // 1. Extract ID from URL (?id=xxxx)
             const params = new URLSearchParams(window.location.search);
             const movieId = params.get('id');
             
+            // 2. Check if DB exists and Movie ID is valid
             if (window.VOID_DB && movieId) {
                 currentMovie = window.VOID_DB.find(m => m.id === movieId);
+                
                 if (currentMovie) {
+                    // Update Page Title and UI
+                    document.title = `VOID | ${currentMovie.title}`;
                     document.getElementById('player-title').innerText = currentMovie.title;
-                    const source = document.getElementById('video-source');
                     
-                    // Pointing to your local GitHub media folder
-                    // Assumes the admin adds "media/filename.mp4"
-                    source.src = currentMovie.videoUrl; 
+                    // Set Video Source
+                    const source = document.getElementById('video-source');
+                    source.src = currentMovie.videoUrl; // Takes the path from your admin page entry
+                    
                     video.load();
+                    video.play().catch(e => {
+                        console.log("Autoplay blocked or source error. Waiting for user interaction.");
+                    });
                     
                     loadRecommendations(movieId);
+                } else {
+                    showError();
                 }
+            } else {
+                showError();
             }
         }
 
-        // Recommendations Logic
+        function showError() {
+            document.getElementById('error-overlay').style.display = 'flex';
+            document.getElementById('player-container').style.display = 'none';
+        }
+
+        // Recommendations Logic (Fetches others from JS file)
         function loadRecommendations(excludeId) {
-            const otherMovies = window.VOID_DB.filter(m => m.id !== excludeId).slice(0, 4);
+            const otherMovies = window.VOID_DB.filter(m => m.id !== excludeId).slice(0, 5);
             const container = document.getElementById('more-movies');
             
             if (otherMovies.length > 0) {
                 container.innerHTML = otherMovies.map(m => `
-                    <div class="recommendation-card cursor-pointer" onclick="window.location.href='video_player.html?id=${m.id}'">
-                        <div class="aspect-[9/16] rounded-xl overflow-hidden mb-4 border border-white/10">
+                    <div class="recommendation-card cursor-pointer group" onclick="window.location.href='video_player.html?id=${m.id}'">
+                        <div class="aspect-[9/14] rounded-2xl overflow-hidden mb-5 border border-white/10 relative">
                             <img src="${m.posterPortrait}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-[#ff3e00]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
                         </div>
-                        <p class="text-[8px] font-black uppercase tracking-[2px] text-center">${m.title}</p>
+                        <p class="text-[9px] font-black uppercase tracking-[3px] text-center truncate px-2">${m.title}</p>
                     </div>
                 `).join('');
             } else {
-                container.innerHTML = `<p class="text-white/10 italic text-xs">No other transmissions found.</p>`;
+                container.innerHTML = `<p class="text-white/10 italic text-xs uppercase tracking-widest">Database isolated. No other movies found.</p>`;
             }
         }
 
-        // Video Controls
+        // Playback Logic
         function togglePlay() {
+            const btn = document.getElementById('play-pause-btn');
             if (video.paused) {
                 video.play();
-                document.getElementById('play-pause-btn').innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+                btn.innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
             } else {
                 video.pause();
-                document.getElementById('play-pause-btn').innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                btn.innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             }
         }
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.getElementById('player-container').requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        }
+        video.addEventListener('loadedmetadata', () => {
+            document.getElementById('time-total').innerText = formatTime(video.duration);
+        });
 
-        // Progress Logic
         video.addEventListener('timeupdate', () => {
             const percentage = (video.currentTime / video.duration) * 100;
             progress.style.width = percentage + '%';
+            document.getElementById('time-current').innerText = formatTime(video.currentTime);
         });
 
         document.getElementById('progress-container').addEventListener('click', (e) => {
@@ -216,32 +274,55 @@
             video.currentTime = pos * video.duration;
         });
 
-        // End of Video
+        // Toggle Fullscreen
+        function toggleFullscreen() {
+            const container = document.getElementById('player-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Video End Transition
         video.onended = () => {
             document.getElementById('end-screen').style.display = 'flex';
             hud.style.display = 'none';
+            if (document.fullscreenElement) document.exitFullscreen();
         };
 
-        // Rating
+        // Rating Interaction
         function rate(stars) {
-            const btns = document.querySelectorAll('.star-rating button');
+            const btns = document.querySelectorAll('#rating-stars button');
             btns.forEach((b, i) => {
-                b.classList.toggle('active', i < stars);
+                if (i < stars) {
+                    b.classList.add('selected');
+                } else {
+                    b.classList.remove('selected');
+                }
             });
-            // In a real app, you would save this to the user's profile
         }
 
-        // HUD Auto-hide
+        // HUD Auto-hide Control
         let hidetimer;
-        document.addEventListener('mousemove', () => {
+        function resetHUDTimer() {
             hud.classList.add('active');
             clearTimeout(hidetimer);
-            hidetimer = setTimeout(() => {
-                if (!video.paused) hud.classList.remove('active');
-            }, 3000);
-        });
+            if (!video.paused) {
+                hidetimer = setTimeout(() => {
+                    hud.classList.remove('active');
+                }, 4000);
+            }
+        }
 
-        window.onload = loadVideo;
+        document.addEventListener('mousemove', resetHUDTimer);
+        document.addEventListener('touchstart', resetHUDTimer);
+        video.onplay = resetHUDTimer;
+
+        // Initialize on load
+        window.onload = loadVideoFromDB;
     </script>
 </body>
 </html>

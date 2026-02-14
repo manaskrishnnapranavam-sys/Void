@@ -31,7 +31,9 @@
         }
         .movie-card:hover { filter: blur(0px) brightness(1.2); z-index: 20; transform: scale(1.03); }
 
-        .sidebar { background: var(--glass); backdrop-filter: blur(25px); border-right: 1px solid var(--glass-border); z-index: 100; }
+        .sidebar { background: var(--glass); backdrop-filter: blur(25px); border-right: 1px solid var(--glass-border); z-index: 100; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .sidebar.closed { transform: translateX(-100%); }
+        
         .sidebar-item { transition: all 0.3s ease; position: relative; color: rgba(255,255,255,0.4); cursor: pointer; }
         .sidebar-item:hover, .sidebar-item.active { color: #ffffff; background: rgba(255,255,255,0.04); }
         .sidebar-item.active::before { content: ''; position: absolute; left: 0; top: 25%; height: 50%; width: 3px; background-color: var(--accent); box-shadow: 0 0 20px var(--accent); }
@@ -49,18 +51,31 @@
         .view-section { display: none; min-height: 100vh; }
         .view-section.active { display: block; }
         .instant-view { animation: fadeInSimple 0.4s ease-out; }
+        
+        main { transition: margin-left 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        main.expanded { margin-left: 0 !important; }
+
         @keyframes fadeInSimple { from { opacity: 0; } to { opacity: 1; } }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        
+        #sidebar-toggle { z-index: 110; transition: all 0.3s ease; }
     </style>
 </head>
 <body>
 
-    <nav class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8 transition-all duration-500">
+    <!-- Menu Toggle Button -->
+    <button id="sidebar-toggle" onclick="toggleSidebar()" class="fixed top-8 left-8 p-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full hover:bg-[#ff3e00] transition-all">
+        <svg id="toggle-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
+    </button>
+
+    <nav id="sidebar" class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8">
         <div class="w-full">
-            <div class="px-8 mb-12 cursor-pointer" onclick="switchView('home')">
+            <div class="px-8 mt-16 mb-12 cursor-pointer" onclick="switchView('home')">
                 <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#ff3e00]">.</span></h1>
                 <p class="hidden lg:block text-[8px] uppercase tracking-[4px] opacity-20 mt-1 font-bold">Local Sync Mode</p>
             </div>
@@ -77,7 +92,6 @@
             </div>
         </div>
 
-        <!-- Updated Navigation Footer: Dual Access Mode -->
         <div class="px-6 w-full space-y-3">
             <a href="admin_log.html" class="block w-full bg-[#ff3e00]/10 border border-[#ff3e00]/20 text-[#ff3e00] py-3 rounded-xl font-black text-[9px] text-center uppercase tracking-[2px] hover:bg-[#ff3e00] hover:text-white transition-all">
                 <span class="hidden lg:inline">System Admin</span>
@@ -90,7 +104,7 @@
         </div>
     </nav>
 
-    <main class="ml-20 lg:ml-64">
+    <main id="main-content" class="ml-20 lg:ml-64">
         <div id="view-home" class="view-section active instant-view">
             <section class="relative h-[92vh] w-full overflow-hidden" id="hero-slider">
                 <div class="absolute inset-0 flex items-center justify-center">
@@ -139,9 +153,39 @@
             if (window.VOID_DB) {
                 allMovies = window.VOID_DB;
                 renderDashboard();
+                setupSearch();
             } else {
                 console.warn("void_data.js not found. Add movies in Admin Page first.");
             }
+        }
+
+        // Sidebar Toggle Logic
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            const icon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('closed');
+            main.classList.toggle('expanded');
+            
+            if (sidebar.classList.contains('closed')) {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m16 6H4"></path>';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>';
+            }
+        }
+
+        // Search Logic Implementation
+        function setupSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = allMovies.filter(m => 
+                    m.title.toLowerCase().includes(query) || 
+                    (m.plot && m.plot.toLowerCase().includes(query))
+                );
+                renderMovies('search-results', filtered);
+            });
         }
 
         function renderDashboard() {
@@ -214,6 +258,11 @@
 
         window.switchView = function(viewId) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(v => v.classList.remove('active'));
+            
+            const activeLink = document.querySelector(`.sidebar-item[data-view="${viewId}"]`);
+            if(activeLink) activeLink.classList.add('active');
+            
             document.getElementById(`view-${viewId}`).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }

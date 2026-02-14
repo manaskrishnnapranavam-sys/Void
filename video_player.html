@@ -5,25 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOID | Cinema Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load the shared database -->
     <script src="void_data.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #ff3e00; --bg: #050505; }
-        body { background-color: var(--bg); color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        :root {
+            --accent: #ff3e00;
+            --bg: #050505;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+
         .premium-font { font-family: 'Outfit', sans-serif; }
-        .player-wrapper { position: relative; width: 100vw; height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; }
-        video { width: 100%; height: 100%; object-fit: contain; }
-        .video-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; opacity: 0; transition: opacity 0.4s ease; z-index: 10; }
-        .player-wrapper:hover .video-overlay, .player-wrapper.touch-active .video-overlay { opacity: 1; }
-        .control-bar { display: flex; align-items: center; gap: 1.5rem; width: 100%; }
-        .progress-container { flex-grow: 1; height: 4px; background: rgba(255,255,255,0.2); position: relative; cursor: pointer; border-radius: 2px; }
-        .progress-bar { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; position: relative; }
-        .icon-btn { transition: transform 0.2s, color 0.2s; cursor: pointer; }
-        .icon-btn:hover { color: var(--accent); transform: scale(1.1); }
-        #error-screen { position: absolute; inset: 0; background: #050505; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
-        #path-debug { font-family: monospace; font-size: 10px; color: #ff3e00; margin-top: 10px; opacity: 0.6; }
+
+        .player-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .player-wrapper:hover .video-overlay,
+        .player-wrapper.touch-active .video-overlay {
+            opacity: 1;
+        }
+
+        .control-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            position: relative;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: height 0.2s;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .icon-btn {
+            transition: transform 0.2s, color 0.2s;
+            cursor: pointer;
+        }
+
+        .icon-btn:hover {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        #error-screen {
+            position: absolute;
+            inset: 0;
+            background: #050505;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Debug console style */
+        #path-debug {
+            font-family: monospace;
+            font-size: 10px;
+            color: #ff3e00;
+            margin-top: 10px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -48,7 +140,7 @@
                     </a>
                     <div>
                         <h2 id="movie-title" class="premium-font text-xl font-bold tracking-tight">LOADING...</h2>
-                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Stream Active</p>
+                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Encrypted Stream</p>
                     </div>
                 </div>
             </div>
@@ -57,11 +149,18 @@
                 <div class="progress-container" id="seek-container">
                     <div class="progress-bar" id="progress-fill"></div>
                 </div>
+
                 <div class="control-bar">
                     <button id="play-pause" class="icon-btn">
                         <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         <svg id="pause-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </button>
+
+                    <div class="flex items-center gap-3">
+                        <svg class="w-6 h-6 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                        <div class="w-20 h-1 bg-white/20 rounded-full"><div class="w-2/3 h-full bg-white rounded-full"></div></div>
+                    </div>
+
                     <div class="flex-grow"></div>
                     <span class="text-xs font-mono opacity-60" id="time-display">00:00 / 00:00</span>
                     <button id="fullscreen-btn" class="icon-btn">
@@ -84,49 +183,41 @@
             const movieId = urlParams.get('id');
 
             if (!movieId || !window.VOID_DB) {
-                showError("Database Connection Error.");
+                showError("Database not linked.");
                 return;
             }
 
             const movie = window.VOID_DB.find(m => String(m.id) === String(movieId));
             if (!movie || !movie.videoUrl) {
-                showError("Movie Data Missing.");
+                showError("Movie ID or Video Path missing.");
                 return;
             }
 
             titleEl.innerText = movie.title.toUpperCase();
+
+            // --- SMART PATH LOGIC ---
+            let path = movie.videoUrl;
             
-            // Logic: Try the path provided, but if it's just a filename, try adding 'media/'
-            let primaryPath = movie.videoUrl;
-            videoSource.src = primaryPath;
+            // If you typed "movie.mp4" but it's in "media/movie.mp4"
+            // we ensure the path is consistent.
+            debugEl.innerText = "Attempting to load: " + path;
+
+            videoSource.src = path;
             video.load();
 
-            debugEl.innerText = "Target: " + primaryPath;
-
             video.play().catch(err => {
-                console.log("Waiting for user interaction or path fix...");
+                console.warn("Autoplay blocked or file not found:", err);
+                // If it fails immediately, it might be a path error
+                if (video.networkState === 3) { 
+                    showError("File not found at: " + path);
+                }
             });
         }
 
-        // AUTO-REPAIR LOGIC: If first attempt fails, try looking in 'media/' folder automatically
+        // Catching specific video errors
         video.onerror = function() {
-            const currentSrc = videoSource.src;
-            if (!currentSrc.includes('/media/') && !currentSrc.startsWith('media/')) {
-                const fileName = currentSrc.split('/').pop();
-                const fallbackPath = 'media/' + fileName;
-                console.log("Retrying with fallback path:", fallbackPath);
-                debugEl.innerText = "Retrying fallback: " + fallbackPath;
-                
-                videoSource.src = fallbackPath;
-                video.load();
-                video.play().catch(() => {});
-                
-                // Remove this listener so it doesn't loop forever
-                video.onerror = () => showError("File not found in root or /media folder.");
-            } else {
-                showError("The video file could not be found.");
-                debugEl.innerText = "Tried: " + currentSrc;
-            }
+            showError("The video file could not be loaded. Check your 'media' folder.");
+            debugEl.innerText = "Tried Path: " + videoSource.src;
         };
 
         function showError(msg) {
@@ -134,7 +225,7 @@
             document.getElementById('error-message').innerText = msg;
         }
 
-        // Basic Control Logic
+        // Basic Controls
         document.getElementById('play-pause').onclick = () => {
             if (video.paused) {
                 video.play();
@@ -148,10 +239,8 @@
         };
 
         video.ontimeupdate = () => {
-            if (video.duration) {
-                const p = (video.currentTime / video.duration) * 100;
-                document.getElementById('progress-fill').style.width = p + '%';
-            }
+            const p = (video.currentTime / video.duration) * 100;
+            document.getElementById('progress-fill').style.width = p + '%';
         };
 
         window.onload = initPlayer;

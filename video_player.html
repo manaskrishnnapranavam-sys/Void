@@ -6,61 +6,241 @@
     <title>VOID | Playback Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="void_data.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background: #000; color: white; margin: 0; overflow: hidden; font-family: sans-serif; }
-        .player-container { height: 100vh; width: 100vw; position: relative; display: flex; align-items: center; justify-content: center; }
+        :root {
+            --accent: #ff3e00;
+        }
+        body { background: #000; color: white; margin: 0; overflow-x: hidden; font-family: 'Inter', sans-serif; }
+        .premium-font { font-family: 'Outfit', sans-serif; }
+
+        .player-wrapper { position: relative; width: 100vw; height: 100vh; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: contain; }
-        .controls-overlay {
-            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%, rgba(0,0,0,0.8) 100%);
+
+        /* UI Overlays */
+        .ui-layer { 
+            position: absolute; inset: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%, rgba(0,0,0,0.4) 100%);
             opacity: 0; transition: opacity 0.5s ease; z-index: 10;
         }
-        .player-container:hover .controls-overlay { opacity: 1; }
-        .back-btn { position: absolute; top: 30px; left: 30px; font-weight: bold; font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.5); transition: color 0.3s; }
-        .back-btn:hover { color: #ff3e00; }
-        .video-info { position: absolute; bottom: 40px; left: 40px; }
-        .title { font-size: 48px; font-weight: 900; letter-spacing: -2px; text-transform: uppercase; }
+        .player-wrapper:hover .ui-layer, .ui-layer.active { opacity: 1; }
+
+        /* End Screen */
+        #end-screen {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px); z-index: 50; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .star-rating button { transition: transform 0.2s; color: rgba(255,255,255,0.2); }
+        .star-rating button:hover, .star-rating button.active { color: var(--accent); transform: scale(1.2); }
+
+        .recommendation-card { 
+            width: 200px; transition: all 0.4s ease; 
+            filter: grayscale(1) opacity(0.5);
+        }
+        .recommendation-card:hover { 
+            filter: grayscale(0) opacity(1); transform: translateY(-10px); 
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Custom Video Progress Bar */
+        .progress-bar {
+            height: 4px; background: rgba(255,255,255,0.1);
+            position: absolute; bottom: 100px; left: 40px; right: 40px;
+            cursor: pointer; border-radius: 2px;
+        }
+        #current-progress {
+            height: 100%; background: var(--accent); width: 0%;
+            box-shadow: 0 0 15px var(--accent); border-radius: 2px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
-        <video id="main-video" controls autoplay>
+    <div class="player-wrapper" id="player-container">
+        <!-- The Video Engine -->
+        <video id="main-video" autoplay>
             <source id="video-source" src="" type="video/mp4">
-            Your browser does not support the video tag.
         </video>
 
-        <div class="controls-overlay">
-            <a href="index.html" class="back-btn flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round"/></svg>
-                Exit Playback
-            </a>
-            <div class="video-info">
-                <p id="player-title" class="title">Transmission Unknown</p>
-                <p id="player-status" class="text-white/40 text-xs uppercase tracking-[4px]">Source: GitHub Repository</p>
+        <!-- UI HUD -->
+        <div class="ui-layer" id="hud">
+            <div class="p-10 flex justify-between items-start w-full">
+                <a href="index.html" class="group flex items-center text-[10px] font-black uppercase tracking-[4px] text-white/40 hover:text-white transition-all">
+                    <svg class="w-5 h-5 mr-3 group-hover:-translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="3" stroke-linecap="round"/></svg>
+                    Terminate Session
+                </a>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="text-right">
+                        <p id="player-title" class="premium-font text-2xl font-black uppercase tracking-tighter">Initializing...</p>
+                        <p id="quality-label" class="text-[9px] text-[#ff3e00] font-bold uppercase tracking-[2px]">4K Lossless</p>
+                    </div>
+                </div>
             </div>
+
+            <!-- Controls Area -->
+            <div class="absolute bottom-0 left-0 w-full p-10">
+                <div class="flex items-end justify-between mb-8">
+                    <div>
+                        <button onclick="togglePlay()" id="play-pause-btn" class="text-white hover:text-[#ff3e00] transition-colors">
+                            <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-8">
+                        <div class="group relative">
+                            <button class="text-[10px] font-black uppercase tracking-[3px] text-white/40 hover:text-white">Quality</button>
+                            <div class="absolute bottom-full right-0 mb-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl p-4 hidden group-hover:block w-32">
+                                <button class="block w-full text-left text-[9px] py-2 text-[#ff3e00]">2160p (4K)</button>
+                                <button class="block w-full text-left text-[9px] py-2 opacity-40">1080p (HD)</button>
+                                <button class="block w-full text-left text-[9px] py-2 opacity-40">720p (SD)</button>
+                            </div>
+                        </div>
+                        <button onclick="toggleFullscreen()" class="text-white/40 hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2"/></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="progress-bar" id="progress-container">
+                    <div id="current-progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- End of Video Screen -->
+        <div id="end-screen">
+            <h2 class="premium-font text-5xl font-black uppercase tracking-tighter mb-2">Transmission Complete</h2>
+            <p class="text-white/40 text-xs uppercase tracking-[4px] mb-12">How was the experience?</p>
+
+            <!-- Rating System -->
+            <div class="star-rating flex space-x-4 mb-20">
+                <button onclick="rate(1)" class="text-4xl">✦</button>
+                <button onclick="rate(2)" class="text-4xl">✦</button>
+                <button onclick="rate(3)" class="text-4xl">✦</button>
+                <button onclick="rate(4)" class="text-4xl">✦</button>
+                <button onclick="rate(5)" class="text-4xl">✦</button>
+            </div>
+
+            <!-- Watch More Section -->
+            <div class="w-full px-20">
+                <p class="text-[10px] font-black uppercase tracking-[5px] text-white/20 mb-8 text-center">Protocol Suggestions</p>
+                <div id="more-movies" class="flex justify-center space-x-8">
+                    <!-- Dynamic recommendations will load here -->
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="mt-16 text-[10px] font-black uppercase tracking-[4px] text-white/20 hover:text-white transition-all">Replay Transmission</button>
         </div>
     </div>
 
     <script>
+        const video = document.getElementById('main-video');
+        const progress = document.getElementById('current-progress');
+        const hud = document.getElementById('hud');
+        let currentMovie = null;
+
         function loadVideo() {
             const params = new URLSearchParams(window.location.search);
             const movieId = params.get('id');
             
             if (window.VOID_DB && movieId) {
-                const movie = window.VOID_DB.find(m => m.id === movieId);
-                if (movie) {
-                    document.getElementById('player-title').innerText = movie.title;
-                    const video = document.getElementById('main-video');
+                currentMovie = window.VOID_DB.find(m => m.id === movieId);
+                if (currentMovie) {
+                    document.getElementById('player-title').innerText = currentMovie.title;
                     const source = document.getElementById('video-source');
                     
-                    // Note: This expects the file path from your Admin page
-                    source.src = movie.videoUrl; 
+                    // Pointing to your local GitHub media folder
+                    // Assumes the admin adds "media/filename.mp4"
+                    source.src = currentMovie.videoUrl; 
                     video.load();
+                    
+                    loadRecommendations(movieId);
                 }
-            } else {
-                document.getElementById('player-title').innerText = "Asset Not Found";
             }
         }
+
+        // Recommendations Logic
+        function loadRecommendations(excludeId) {
+            const otherMovies = window.VOID_DB.filter(m => m.id !== excludeId).slice(0, 4);
+            const container = document.getElementById('more-movies');
+            
+            if (otherMovies.length > 0) {
+                container.innerHTML = otherMovies.map(m => `
+                    <div class="recommendation-card cursor-pointer" onclick="window.location.href='video_player.html?id=${m.id}'">
+                        <div class="aspect-[9/16] rounded-xl overflow-hidden mb-4 border border-white/10">
+                            <img src="${m.posterPortrait}" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-[8px] font-black uppercase tracking-[2px] text-center">${m.title}</p>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `<p class="text-white/10 italic text-xs">No other transmissions found.</p>`;
+            }
+        }
+
+        // Video Controls
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+                document.getElementById('play-pause-btn').innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            } else {
+                video.pause();
+                document.getElementById('play-pause-btn').innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.getElementById('player-container').requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Progress Logic
+        video.addEventListener('timeupdate', () => {
+            const percentage = (video.currentTime / video.duration) * 100;
+            progress.style.width = percentage + '%';
+        });
+
+        document.getElementById('progress-container').addEventListener('click', (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        });
+
+        // End of Video
+        video.onended = () => {
+            document.getElementById('end-screen').style.display = 'flex';
+            hud.style.display = 'none';
+        };
+
+        // Rating
+        function rate(stars) {
+            const btns = document.querySelectorAll('.star-rating button');
+            btns.forEach((b, i) => {
+                b.classList.toggle('active', i < stars);
+            });
+            // In a real app, you would save this to the user's profile
+        }
+
+        // HUD Auto-hide
+        let hidetimer;
+        document.addEventListener('mousemove', () => {
+            hud.classList.add('active');
+            clearTimeout(hidetimer);
+            hidetimer = setTimeout(() => {
+                if (!video.paused) hud.classList.remove('active');
+            }, 3000);
+        });
+
         window.onload = loadVideo;
     </script>
 </body>

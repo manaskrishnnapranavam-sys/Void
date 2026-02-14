@@ -3,94 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Void Player - Data Resolved</title>
+    <title>Void Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0a0a0a; color: white; }
-        .poster-glow:hover { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        body { background-color: #050505; color: #eee; font-family: sans-serif; }
+        .movie-card { background: #111; border: 1px solid #222; border-radius: 12px; }
+        .poster-frame { border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-    <div id="player-container" class="w-full max-w-4xl bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
-        <!-- Error Message Overlay (Hidden by default) -->
-        <div id="error-screen" class="hidden p-10 text-center">
-            <h2 class="text-red-500 text-2xl font-bold mb-2">Initialization Error</h2>
-            <p id="error-text" class="text-zinc-400"></p>
-        </div>
-
-        <!-- Movie Display -->
-        <div id="movie-content" class="flex flex-col md:flex-row p-6 gap-8">
-            <div class="w-full md:w-1/3">
-                <img id="movie-poster" src="" alt="Poster" class="w-full rounded-lg shadow-lg poster-glow border border-zinc-700">
+    <div id="player-ui" class="w-full max-w-3xl movie-card p-8 shadow-2xl transition-opacity duration-500 opacity-0">
+        <div class="flex flex-col md:flex-row gap-8 items-center">
+            <!-- Poster -->
+            <div class="w-48 h-72 flex-shrink-0 poster-frame bg-zinc-800">
+                <img id="movie-poster" src="" alt="Poster" class="w-full h-full object-cover">
             </div>
-            <div class="w-full md:w-2/3 flex flex-col justify-center">
-                <h1 id="movie-title" class="text-4xl font-black mb-2 tracking-tight"></h1>
-                <p id="movie-genre" class="text-blue-400 font-medium mb-6"></p>
-                <div class="flex gap-4">
-                    <button class="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-zinc-200 transition">
-                        Play Now
+
+            <!-- Info -->
+            <div class="flex-1 text-center md:text-left">
+                <h1 id="movie-title" class="text-5xl font-black mb-2 tracking-tighter text-white"></h1>
+                <p id="movie-genre" class="text-zinc-500 text-lg mb-6 uppercase tracking-widest"></p>
+                
+                <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+                    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-lg font-bold transition">
+                        WATCH NOW
                     </button>
-                    <button class="bg-zinc-800 text-white px-8 py-3 rounded-full font-bold hover:bg-zinc-700 transition">
-                        Details
+                    <button class="bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-3 rounded-lg font-bold transition">
+                        + WATCHLIST
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Mocking the legacy data import if not present -->
-    <script>
-        // This ensures the player doesn't crash if void_data.js isn't loaded yet
-        // In your real setup, void_data.js provides window.VOID_DB
-        if (typeof window.VOID_DB === 'undefined') {
-            console.warn("VOID_DB not found in global scope. Ensure void_data.js is loaded.");
-        }
-    </script>
+    <!-- Error state -->
+    <div id="error-msg" class="hidden text-zinc-600 font-mono">
+        [ERROR: VOID_DB NOT FOUND]
+    </div>
 
     <script>
         /**
-         * PLAYER RESOLVER LOGIC
-         * This handles the "void_config.movieUrl NOT FOUND" error 
-         * by falling back to the legacy window.VOID_DB object.
+         * The player logic specifically designed to read your void_data.js
          */
-        const initPlayer = () => {
-            const movieTitle = document.getElementById('movie-title');
-            const movieGenre = document.getElementById('movie-genre');
-            const moviePoster = document.getElementById('movie-poster');
-            const errorScreen = document.getElementById('error-screen');
-            const errorText = document.getElementById('error-text');
-            const movieContent = document.getElementById('movie-content');
+        function startPlayer() {
+            const ui = document.getElementById('player-ui');
+            const error = document.getElementById('error-msg');
 
-            // 1. Resolve Data Source
-            let activeData = null;
-
-            // Fallback Logic: If config fails, check window.VOID_DB
+            // Accessing the data from your void_data.js
+            // window.VOID_DB = [{"title":"FSD", ... }]
             if (window.VOID_DB && window.VOID_DB.length > 0) {
-                activeData = window.VOID_DB[0]; // Take the first entry (FSD)
-                console.log("Player: Data resolved from window.VOID_DB successfully.");
-            } else {
-                // Show user-friendly version of your error
-                movieContent.classList.add('hidden');
-                errorScreen.classList.remove('hidden');
-                errorText.innerText = "Check void_data.js: window.VOID_DB is missing or empty.";
-                return;
-            }
+                const movie = window.VOID_DB[0];
 
-            // 2. Populate UI
-            movieTitle.innerText = activeData.title || "Unknown Title";
-            movieGenre.innerText = activeData.genre || "Action / Adventure";
-            
-            // Handle the Base64 Poster
-            if (activeData.posterPortrait) {
-                moviePoster.src = activeData.posterPortrait;
-            } else {
-                moviePoster.src = "https://via.placeholder.com/300x450?text=No+Poster";
-            }
-        };
+                document.getElementById('movie-title').textContent = movie.title || "Unknown";
+                document.getElementById('movie-genre').textContent = movie.genre || "N/A";
+                
+                // Map the Base64 image
+                if (movie.posterPortrait) {
+                    document.getElementById('movie-poster').src = movie.posterPortrait;
+                }
 
-        // Run initialization on load
-        window.addEventListener('DOMContentLoaded', initPlayer);
+                // Show UI
+                ui.classList.remove('opacity-0');
+            } else {
+                error.classList.remove('hidden');
+                console.error("Data check failed: window.VOID_DB is missing or empty.");
+            }
+        }
+
+        // Wait for page load
+        window.onload = startPlayer;
     </script>
 </body>
 </html>

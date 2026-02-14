@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID | User Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .premium-font { font-family: 'Outfit', sans-serif; }
+
+        /* Ambient background glow */
+        .glow {
+            position: absolute;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(255, 62, 0, 0.1) 0%, transparent 70%);
+            top: -10vw;
+            right: -10vw;
+            z-index: -1;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2.5rem;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #ff3e00;
+            background: rgba(255, 255, 255, 0.08);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(255, 62, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #ff3e00;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 62, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow"></div>
+    <div class="glow" style="bottom: -10vw; left: -10vw; background: radial-gradient(circle, rgba(0, 112, 255, 0.05) 0%, transparent 70%);"></div>
+
+    <div class="login-card">
+        <div class="mb-10 text-center">
+            <h1 class="premium-font text-3xl font-black tracking-tighter mb-2">VOID ACCESS</h1>
+            <p class="text-white/40 text-xs uppercase tracking-[3px] font-semibold">Initialize Personal Identity</p>
+        </div>
+
+        <div class="space-y-6">
+            <div class="input-group">
+                <label class="block text-[10px] uppercase tracking-widest text-white/30 mb-2 ml-1">Username / Email</label>
+                <input type="text" id="user-id" class="w-full px-5 py-4 rounded-2xl text-sm font-medium" placeholder="Identity identifier">
+            </div>
+
+            <div class="input-group">
+                <label class="block text-[10px] uppercase tracking-widest text-white/30 mb-2 ml-1">Passkey</label>
+                <input type="password" id="user-pass" class="w-full px-5 py-4 rounded-2xl text-sm font-medium" placeholder="••••••••">
+            </div>
+
+            <div class="flex items-center justify-between py-2">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer">
+                    <div class="w-4 h-4 bg-white/5 border border-white/10 rounded peer-checked:bg-[#ff3e00] peer-checked:border-[#ff3e00] transition-all mr-2"></div>
+                    <span class="text-[10px] text-white/40 uppercase tracking-wider">Remember Me</span>
+                </label>
+                <!-- Redirect to forgot.html -->
+                <a href="forgot.html" class="text-[10px] text-[#ff3e00] uppercase tracking-wider font-bold hover:underline">Forgot?</a>
+            </div>
+
+            <button onclick="handleUserLogin()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase tracking-[3px] text-[10px] mt-2">
+                Begin Session
+            </button>
+        </div>
+
+        <div class="mt-10 text-center border-t border-white/5 pt-8">
+            <p class="text-white/20 text-[10px] uppercase tracking-widest mb-4">New to the void?</p>
+            <!-- Redirect to sign_up.html -->
+            <a href="sign_up.html" class="inline-block text-white hover:text-[#ff3e00] text-[10px] font-black uppercase tracking-[3px] transition-colors">Request Access</a>
+        </div>
+
+        <div class="mt-8 flex justify-center">
+            <!-- Back to discovery directly back to index.html -->
+            <a href="index.html" class="text-white/20 hover:text-white text-[9px] uppercase tracking-widest transition-colors flex items-center">
+                <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Back to Discovery
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function handleUserLogin() {
+            const user = document.getElementById('user-id').value;
+            const pass = document.getElementById('user-pass').value;
+
+            if (user && pass) {
+                const btn = document.querySelector('.btn-primary');
+                btn.innerText = "AUTHENTICATING...";
+                btn.style.background = "#ff3e00";
+                btn.style.color = "white";
+
+                setTimeout(() => {
+                    window.location.href = 'normal_userindex.html';
+                }, 1200);
+            } else {
+                alert("Please provide identity credentials.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -16,136 +16,41 @@
             --glass-border: rgba(255, 255, 255, 0.08);
         }
 
-        body {
-            background-color: var(--bg-deep);
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            margin: 0;
-        }
-
+        body { background-color: var(--bg-deep); color: #ffffff; font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; }
         .premium-font { font-family: 'Outfit', sans-serif; }
 
         /* Focus-Pull Effect */
-        .movie-card {
-            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-            cursor: pointer;
-            position: relative;
-        }
-
-        #movie-grid:has(.movie-card:hover) .movie-card:not(:hover),
-        #search-results:has(.movie-card:hover) .movie-card:not(:hover) {
+        .movie-card { transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); cursor: pointer; position: relative; }
+        .grid-focus:has(.movie-card:hover) .movie-card:not(:hover) {
             filter: blur(14px) brightness(0.3) saturate(0.5);
             opacity: 0.4;
             transform: scale(0.97);
         }
-
-        .movie-card:hover {
-            filter: blur(0px) brightness(1.2);
-            z-index: 20;
-            transform: scale(1.03);
-        }
+        .movie-card:hover { filter: blur(0px) brightness(1.2); z-index: 20; transform: scale(1.03); }
 
         /* Sidebar Styling */
-        .sidebar {
-            background: var(--glass);
-            backdrop-filter: blur(25px);
-            border-right: 1px solid var(--glass-border);
-            z-index: 100;
-        }
+        .sidebar { background: var(--glass); backdrop-filter: blur(25px); border-right: 1px solid var(--glass-border); z-index: 100; }
+        .sidebar-item { transition: all 0.3s ease; position: relative; color: rgba(255,255,255,0.4); cursor: pointer; }
+        .sidebar-item:hover, .sidebar-item.active { color: #ffffff; background: rgba(255,255,255,0.04); }
+        .sidebar-item.active::before { content: ''; position: absolute; left: 0; top: 25%; height: 50%; width: 3px; background-color: var(--accent); box-shadow: 0 0 20px var(--accent); }
 
-        .sidebar-item {
-            transition: all 0.3s ease;
-            position: relative;
-            color: rgba(255,255,255,0.4);
-            cursor: pointer;
-        }
+        .hero-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity 1.5s ease; }
+        .hero-slide.active { opacity: 1; visibility: visible; }
+        .slide-content { opacity: 0; transform: translateY(40px); transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .hero-slide.active .slide-content { opacity: 1; transform: translateY(0); }
 
-        .sidebar-item:hover, .sidebar-item.active {
-            color: #ffffff;
-            background: rgba(255,255,255,0.04);
-        }
+        .hero-title { text-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.6); letter-spacing: -0.05em; }
+        .details-gradient { background: linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.98) 75%, var(--bg-deep) 100%); }
 
-        .sidebar-item.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 25%;
-            height: 50%;
-            width: 3px;
-            background-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent);
-        }
+        .view-section { display: none; min-height: 100vh; }
+        .view-section.active { display: block; }
+        .instant-view { animation: fadeInSimple 0.4s ease-out; }
+        @keyframes fadeInSimple { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Hero Slider Adjustments */
-        .hero-slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 1.5s ease;
-        }
-
-        .hero-slide.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .slide-content {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .hero-slide.active .slide-content {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Text Shadow and Tight Tracking for Premium Feel */
-        .hero-title {
-            text-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.6);
-            letter-spacing: -0.05em;
-        }
-
-        .nav-btn {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.4s ease;
-            z-index: 50;
-        }
-
-        .nav-btn:hover {
-            background: var(--accent);
-            border-color: var(--accent);
-            box-shadow: 0 0 40px rgba(255, 62, 0, 0.5);
-            transform: scale(1.1);
-        }
-
-        .details-gradient {
-            background: linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.98) 75%, var(--bg-deep) 100%);
-        }
-
-        .view-section {
-            display: none;
-            min-height: 100vh;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-
-        /* Instant fade for specific sections to avoid the "wait" feel */
-        .instant-view {
-            animation: fadeInSimple 0.4s ease-out;
-        }
-
-        @keyframes fadeInSimple {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
+        /* Player UI */
+        .player-controls { background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transition: opacity 0.3s; }
+        .player-container:hover .player-controls { opacity: 1; }
+        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
@@ -153,230 +58,348 @@
 </head>
 <body>
 
-    <nav class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8 transition-all duration-500">
+    <!-- Sidebar (Shared navigation across Discovery/Search/Admin) -->
+    <nav id="main-sidebar" class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8 transition-all duration-500">
         <div class="w-full">
-            <div class="px-8 mb-12 cursor-pointer" onclick="switchView('home')">
+            <div class="px-8 mb-12 cursor-pointer" onclick="navigateTo('home')">
                 <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#ff3e00]">.</span></h1>
-                <p class="hidden lg:block text-[8px] uppercase tracking-[4px] opacity-20 mt-1 font-bold">Zero Point</p>
             </div>
-
             <div class="w-full space-y-1">
-                <div onclick="switchView('home')" class="sidebar-item nav-link active flex items-center px-10 py-5 w-full" data-view="home">
+                <div onclick="navigateTo('home')" class="sidebar-item nav-link active flex items-center px-10 py-5 w-full" data-view="home">
                     <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span class="hidden lg:block font-medium text-sm tracking-wide">Discovery</span>
                 </div>
-                <div onclick="switchView('search')" class="sidebar-item nav-link flex items-center px-10 py-5 w-full" data-view="search">
+                <div onclick="navigateTo('search')" class="sidebar-item nav-link flex items-center px-10 py-5 w-full" data-view="search">
                     <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     <span class="hidden lg:block font-medium text-sm tracking-wide">Search</span>
                 </div>
-                <div onclick="switchView('recent')" class="sidebar-item nav-link flex items-center px-10 py-5 w-full" data-view="recent">
-                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="hidden lg:block font-medium text-sm tracking-wide">History</span>
+                <div id="admin-nav-item" style="display: none;" onclick="navigateTo('admin')" class="sidebar-item nav-link flex items-center px-10 py-5 w-full" data-view="admin">
+                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">Control Center</span>
                 </div>
             </div>
         </div>
-
-        <!-- LOGIN SECTION -->
         <div class="px-6 w-full">
-            <div class="hidden lg:block bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
-                <p class="text-[10px] text-white/40 leading-relaxed font-medium">
-                    Browsing is free, but <span class="text-white">watch history</span> and <span class="text-white">sync</span> require an account.
-                </p>
-            </div>
-            <button onclick="handleLogin()" class="w-full bg-white text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-[2px] hover:bg-[#ff3e00] hover:text-white transition-all transform active:scale-95 shadow-xl">
-                <span class="hidden lg:inline">Initialize Access</span>
-                <span class="lg:hidden">Login</span>
+            <button id="auth-btn" onclick="navigateTo('login')" class="w-full bg-white text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-[2px] hover:bg-[#ff3e00] hover:text-white transition-all transform active:scale-95 shadow-xl">
+                Initialize Access
             </button>
         </div>
     </nav>
 
-    <main class="ml-20 lg:ml-64">
+    <main id="main-content" class="ml-20 lg:ml-64 transition-all">
         
+        <!-- DISCOVERY PAGE -->
         <div id="view-home" class="view-section active instant-view">
-            <section class="relative h-[92vh] w-full overflow-hidden" id="hero-slider">
-                <!-- JS Injection -->
-            </section>
-
+            <section class="relative h-[85vh] w-full overflow-hidden" id="hero-slider"></section>
             <section class="px-8 lg:px-20 py-24">
-                <h3 class="premium-font text-xl font-bold mb-12 flex items-center tracking-[4px] uppercase opacity-40">
-                    Filmography
-                    <div class="ml-8 h-[1px] flex-grow bg-white/5"></div>
-                </h3>
-                <div id="movie-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-10">
-                    <!-- Dynamic Grid -->
-                </div>
+                <h3 class="premium-font text-xl font-bold mb-12 flex items-center tracking-[4px] uppercase opacity-40">Filmography <div class="ml-8 h-[1px] flex-grow bg-white/5"></div></h3>
+                <div id="movie-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-10 grid-focus"></div>
             </section>
         </div>
 
-        <!-- SEARCH -->
+        <!-- SEARCH PAGE -->
         <div id="view-search" class="view-section instant-view px-8 lg:px-20 py-24">
             <h2 class="premium-font text-6xl font-black mb-12 opacity-30 uppercase tracking-tighter">Terminal Search</h2>
-            <div class="max-w-xl">
-                <input type="text" id="search-input" placeholder="Search the void..." 
-                    class="w-full bg-transparent border-b border-white/20 py-4 text-2xl outline-none focus:border-[#ff3e00] transition-all font-light tracking-tight">
+            <div class="max-w-xl"><input type="text" id="search-input" placeholder="Search the void..." class="w-full bg-transparent border-b border-white/20 py-4 text-2xl outline-none focus:border-[#ff3e00] transition-all font-light tracking-tight"></div>
+            <div id="search-results" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mt-16 grid-focus"></div>
+        </div>
+
+        <!-- LOGIN PAGE (Redirect Simulation) -->
+        <div id="view-login" class="view-section instant-view flex items-center justify-center bg-black/50">
+            <div class="w-full max-w-md p-10 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-3xl">
+                <h2 class="premium-font text-4xl font-black mb-2 uppercase tracking-tighter">Identity Terminal</h2>
+                <p class="text-white/40 text-xs mb-8">Access Zero Point restricted history and admin sectors.</p>
+                <div class="space-y-4">
+                    <input type="text" id="login-uid" placeholder="Operator UID" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-[#ff3e00]">
+                    <input type="password" id="login-pass" placeholder="Secure Key" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-[#ff3e00]">
+                    <button onclick="attemptLogin()" class="w-full bg-[#ff3e00] text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] mt-4">Authenticate</button>
+                    <p class="text-[9px] text-center text-white/20 mt-4 uppercase tracking-[2px]">Default Admin: admin / void123</p>
+                </div>
             </div>
-            <div id="search-results" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mt-16">
-                <!-- Search Results appear here -->
+        </div>
+
+        <!-- ADMIN PAGE (Secure Access) -->
+        <div id="view-admin" class="view-section instant-view px-8 lg:px-20 py-24">
+            <div class="flex justify-between items-end mb-16">
+                <h2 class="premium-font text-6xl font-black opacity-30 uppercase tracking-tighter">Control Center</h2>
+                <button onclick="logout()" class="text-[10px] font-black uppercase tracking-widest text-[#ff3e00]">Disconnect</button>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-12">
+                <div class="lg:col-span-1 space-y-6">
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs opacity-50">Upload New Transmission</h3>
+                    <div class="space-y-4 bg-white/5 p-8 rounded-3xl border border-white/5">
+                        <input type="text" id="adm-title" placeholder="Title" class="w-full bg-black border border-white/10 p-3 rounded-lg text-sm">
+                        <input type="text" id="adm-genre" placeholder="Genre" class="w-full bg-black border border-white/10 p-3 rounded-lg text-sm">
+                        <input type="text" id="adm-year" placeholder="Year" class="w-full bg-black border border-white/10 p-3 rounded-lg text-sm">
+                        <input type="text" id="adm-poster" placeholder="Poster URL (Unsplash)" class="w-full bg-black border border-white/10 p-3 rounded-lg text-sm">
+                        <textarea id="adm-plot" placeholder="Plot Summary" class="w-full bg-black border border-white/10 p-3 rounded-lg text-sm h-32"></textarea>
+                        <button onclick="adminAddMovie()" class="w-full bg-white text-black py-4 rounded-xl font-black text-[10px] uppercase">Inject to Discovery</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs opacity-50 mb-6">Current Database</h3>
+                    <div id="admin-movie-list" class="space-y-4"></div>
+                </div>
             </div>
         </div>
 
         <!-- DETAILS VIEW -->
         <div id="view-details" class="view-section relative bg-black instant-view">
-            <div id="movie-hero" class="relative h-[80vh] w-full">
+            <div id="movie-hero" class="relative h-[70vh] w-full">
                 <img id="detail-backdrop" src="" class="w-full h-full object-cover">
                 <div class="absolute inset-0 details-gradient"></div>
-                <button onclick="switchView('home')" class="absolute top-10 left-10 z-50 bg-white/5 backdrop-blur-xl p-5 rounded-full border border-white/10 hover:bg-[#ff3e00] transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round"/></svg>
-                </button>
             </div>
             <div class="px-8 lg:px-32 -mt-64 relative z-10 pb-40">
-                <div class="flex items-center space-x-5 mb-8">
-                    <span id="detail-tag" class="px-4 py-1.5 bg-[#ff3e00] rounded-lg text-[9px] font-black uppercase tracking-[4px]">ORIGINAL</span>
-                    <span id="detail-meta" class="text-white/40 text-[11px] font-bold uppercase tracking-[3px]"></span>
-                </div>
                 <h1 id="detail-title" class="premium-font text-7xl lg:text-[9rem] font-black mb-10 leading-none tracking-tighter uppercase hero-title"></h1>
                 <p id="detail-plot" class="text-white/50 text-xl lg:text-3xl max-w-4xl leading-relaxed mb-16 font-light italic"></p>
-                <button onclick="startPlayback()" class="bg-white text-black px-16 py-6 rounded-full font-black uppercase tracking-[4px] text-xs hover:bg-[#ff3e00] hover:text-white transition-all transform hover:scale-105 shadow-2xl">Start Stream</button>
+                <div class="flex space-x-6">
+                    <button id="start-stream-btn" class="bg-white text-black px-16 py-6 rounded-full font-black uppercase tracking-[4px] text-xs hover:bg-[#ff3e00] hover:text-white transition-all transform hover:scale-105 shadow-2xl">Start Stream</button>
+                    <button onclick="navigateTo('home')" class="bg-white/5 border border-white/10 text-white px-10 py-6 rounded-full font-black uppercase tracking-[4px] text-xs">Return</button>
+                </div>
             </div>
         </div>
-
-        <!-- HISTORY (Placeholder) -->
-        <div id="view-recent" class="view-section instant-view px-8 lg:px-20 py-24">
-            <h2 class="premium-font text-6xl font-black mb-12 opacity-30 uppercase tracking-tighter">History</h2>
-            <div class="bg-white/5 border border-white/5 rounded-3xl p-12 text-center max-w-2xl">
-                <p class="text-white/40 text-xl font-light italic mb-8">Personal watch history is restricted to authenticated users.</p>
-                <button onclick="handleLogin()" class="bg-white text-black px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-[3px] hover:bg-[#ff3e00] hover:text-white transition-all">Initialize Access</button>
-            </div>
-        </div>
-
     </main>
 
+    <!-- PLAYBACK PAGE (Full Redirection) -->
+    <div id="view-playback" class="view-section fixed inset-0 z-[200] bg-black instant-view">
+        <div class="player-container relative w-full h-full flex items-center justify-center group overflow-hidden">
+            <div id="video-surface" class="absolute inset-0 bg-cover bg-center grayscale-[50%] transition-transform duration-[10s] scale-110"></div>
+            <div class="absolute inset-0 bg-black/40"></div>
+            
+            <div class="player-controls absolute bottom-0 left-0 right-0 p-12 text-white">
+                <div id="video-progress" class="w-full h-1 bg-white/20 rounded-full mb-8 cursor-pointer relative overflow-hidden">
+                    <div id="progress-bar" class="absolute h-full bg-[#ff3e00] rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-8">
+                        <button class="text-2xl hover:text-[#ff3e00] transition-colors">❚❚</button>
+                        <span id="player-title" class="premium-font font-bold uppercase tracking-[4px] text-sm"></span>
+                        <span id="player-timer" class="text-white/40 text-xs">00:00 / 00:00</span>
+                    </div>
+                    <div class="flex items-center space-x-8">
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] uppercase tracking-[2px] opacity-30 mb-1">Speed</span>
+                            <select id="playback-speed" onchange="updatePlaybackSpeed(this.value)" class="bg-transparent border-none text-[10px] font-bold uppercase cursor-pointer outline-none">
+                                <option value="1">1.0x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2.0x</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] uppercase tracking-[2px] opacity-30 mb-1">Stream</span>
+                            <select id="playback-quality" class="bg-transparent border-none text-[10px] font-bold uppercase cursor-pointer outline-none">
+                                <option>4K HDR</option>
+                                <option>1080P Ultra</option>
+                                <option>720P Mobile</option>
+                            </select>
+                        </div>
+                        <button onclick="navigateTo('home')" class="text-xs font-black uppercase tracking-[2px] bg-white/10 px-6 py-3 rounded-xl hover:bg-[#ff3e00] transition-all">Exit Player</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="post-watch" class="hidden absolute inset-0 z-10 bg-black/90 flex flex-col items-center justify-center p-20 text-center animate-fadeInSimple">
+                <h2 class="premium-font text-6xl font-black mb-4 uppercase tracking-tighter">Transmission Concluded</h2>
+                <p class="text-white/40 mb-12 italic">Did you find this projection satisfactory?</p>
+                <div class="flex space-x-4 mb-16">
+                    <button onclick="handleRating('positive')" class="px-12 py-5 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-full hover:bg-[#ff3e00] hover:text-white transition-all">Satisfactory</button>
+                    <button onclick="handleRating('negative')" class="px-12 py-5 bg-white/5 border border-white/10 font-black uppercase text-[10px] tracking-widest rounded-full hover:bg-white/10">Insignificant</button>
+                </div>
+                <div class="w-full max-w-lg">
+                    <p class="text-[9px] uppercase tracking-[4px] opacity-20 mb-6">Auto-Sequence In 5s</p>
+                    <div id="up-next-card" class="flex bg-white/5 p-4 rounded-2xl items-center border border-white/5 cursor-pointer hover:border-[#ff3e00] transition-all">
+                        <img id="up-next-img" src="" class="w-24 h-14 object-cover rounded-lg mr-6 shadow-xl">
+                        <div class="text-left"><h4 id="up-next-title" class="font-bold text-sm uppercase"></h4><p class="text-[10px] opacity-40">Zero Point Original</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const movies = [
+        // Data State
+        let movies = [
             { id: 0, title: "Eclipse Point", year: 2024, type: "Series", genre: "Sci-Fi", quality: "4K HDR", tag: "New Arrival", plot: "As the universe begins its final contraction, a group of scientists attempts to restart the engine of reality at the edge of the VOID.", backdrop: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070", poster: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1925" },
             { id: 1, title: "Shifted", year: 2023, type: "Movie", genre: "Thriller", quality: "IMAX", tag: "Trending", plot: "A professional courier who delivers packages between dimensions finds himself carrying a cargo that could rewrite the history of every world.", backdrop: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2070", poster: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059" },
-            { id: 2, title: "Neon Pulse", year: 2024, type: "Special", genre: "Musical", quality: "Atmos", tag: "Original", plot: "A visual symphony exploring the relationship between digital consciousness and analog biology. Directed by the Zero Point team.", backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1925", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1925" },
-            { id: 3, title: "Architect", year: 2022, type: "Doc", genre: "Science", quality: "4K", tag: "Curated", plot: "An intimate look at the creators of the digital universe and the code that governs our perception of reality.", backdrop: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=2070", poster: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=2070" },
-            { id: 4, title: "Running", year: 2024, type: "Movie", genre: "Action", quality: "HDR10+", tag: "Must Watch", plot: "In a world where memories can be bought and sold, one man is running to keep the only memory he has left—of a woman who never existed.", backdrop: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=2037", poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=2037" }
+            { id: 2, title: "Neon Pulse", year: 2024, type: "Special", genre: "Musical", quality: "Atmos", tag: "Original", plot: "A visual symphony exploring the relationship between digital consciousness and analog biology. Directed by the Zero Point team.", backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1925", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1925" }
         ];
 
-        let currentSlide = 0;
+        let isAdmin = false;
+        let currentMovie = null;
+        let playbackInterval = null;
 
-        function initSlider() {
-            const slider = document.getElementById('hero-slider');
-            slider.innerHTML = movies.slice(0, 3).map((m, i) => `
-                <div class="hero-slide ${i === 0 ? 'active' : ''}">
-                    <img src="${m.backdrop}" class="absolute inset-0 w-full h-full object-cover grayscale-[20%]">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
-                    <div class="absolute inset-0 flex flex-col items-center justify-end text-center px-8 z-10 pb-24">
-                        <div class="slide-content max-w-6xl">
-                            <div class="flex items-center justify-center space-x-5 mb-8">
-                                <span class="px-4 py-1.5 bg-[#ff3e00] rounded-lg text-[9px] font-black tracking-[5px] uppercase shadow-2xl">${m.tag}</span>
-                                <span class="text-white/60 text-xs font-bold tracking-[3px] uppercase">${m.type} • ${m.quality}</span>
-                            </div>
-                            <h2 class="premium-font text-6xl lg:text-8xl font-black mb-8 hero-title uppercase leading-[0.9]">${m.title}</h2>
-                            <p class="text-white/50 text-lg lg:text-xl max-w-2xl mx-auto mb-12 font-light italic drop-shadow-lg leading-relaxed">
-                                ${m.plot.substring(0, 130)}...
-                            </p>
-                            <div class="flex justify-center space-x-6">
-                                <button onclick="openMovie(${m.id})" class="bg-white text-black px-12 py-5 rounded-full font-black uppercase tracking-[4px] text-[10px] hover:bg-[#ff3e00] hover:text-white transition-all shadow-2xl transform hover:scale-105">View Stream</button>
-                                <button onclick="openMovie(${m.id})" class="bg-white/5 backdrop-blur-2xl border border-white/10 px-12 py-5 rounded-full font-black uppercase tracking-[4px] text-[10px] hover:bg-white/10 transition-all">Archive Info</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('') + `
-                <div class="absolute inset-y-0 left-8 z-30 flex items-center">
-                    <button onclick="prevSlide()" class="nav-btn w-14 h-14 rounded-full text-white text-2xl flex items-center justify-center shadow-2xl">‹</button>
-                </div>
-                <div class="absolute inset-y-0 right-8 z-30 flex items-center">
-                    <button onclick="nextSlide()" class="nav-btn w-14 h-14 rounded-full text-white text-2xl flex items-center justify-center shadow-2xl">›</button>
-                </div>
-            `;
+        // Navigation Engine (Simulates actual page redirection using Hash)
+        function navigateTo(route, params = null) {
+            window.location.hash = `/${route}${params ? `?id=${params}` : ''}`;
         }
 
-        function showSlide(index) {
-            const slides = document.querySelectorAll('.hero-slide');
-            slides.forEach(s => s.classList.remove('active'));
-            if (index >= slides.length) currentSlide = 0;
-            else if (index < 0) currentSlide = slides.length - 1;
-            else currentSlide = index;
-            slides[currentSlide].classList.add('active');
-        }
+        // Router (Listens for hash changes to "redirect" the user)
+        function router() {
+            const path = window.location.hash.slice(2) || 'home';
+            const [viewId, query] = path.split('?');
+            
+            // UI Handling
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            const targetView = document.getElementById(`view-${viewId}`) || document.getElementById('view-home');
+            targetView.classList.add('active');
 
-        function nextSlide() { showSlide(currentSlide + 1); }
-        function prevSlide() { showSlide(currentSlide - 1); }
-
-        function renderMovies(targetId, data) {
-            const container = document.getElementById(targetId);
-            if (data.length === 0) {
-                container.innerHTML = '<p class="col-span-full text-white/20 italic mt-4">No matches found in the VOID.</p>';
-                return;
+            // Layout Toggles
+            const sidebar = document.getElementById('main-sidebar');
+            const main = document.getElementById('main-content');
+            
+            if (viewId === 'playback' || viewId === 'login') {
+                sidebar.style.transform = 'translateX(-100%)';
+                main.style.marginLeft = '0';
+            } else {
+                sidebar.style.transform = 'translateX(0)';
+                main.style.marginLeft = '';
             }
-            container.innerHTML = data.map(m => `
-                <div class="movie-card" onclick="openMovie(${m.id})">
-                    <div class="aspect-[2/3] rounded-2xl overflow-hidden mb-6 shadow-2xl border border-white/5 bg-white/5">
-                        <img src="${m.poster}" class="w-full h-full object-cover">
-                    </div>
-                    <div class="px-2">
-                        <h4 class="font-black text-[10px] uppercase tracking-[3px] truncate mb-2">${m.title}</h4>
-                        <div class="flex justify-between items-center opacity-30">
-                            <span class="text-[9px] font-bold">${m.year}</span>
-                            <span class="text-[9px] font-bold">${m.genre}</span>
-                        </div>
+
+            // Route Specific Logic
+            if (viewId === 'search') document.getElementById('search-input').focus();
+            if (viewId === 'playback') {
+                const id = new URLSearchParams(query).get('id');
+                initiatePlayback(parseInt(id));
+            } else {
+                clearInterval(playbackInterval);
+            }
+
+            // Sync Active Nav
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.view === viewId);
+            });
+        }
+
+        // Auth Redirect Logic
+        function attemptLogin() {
+            const uid = document.getElementById('login-uid').value;
+            const pass = document.getElementById('login-pass').value;
+            
+            if (uid === 'admin' && pass === 'void123') {
+                isAdmin = true;
+                document.getElementById('admin-nav-item').style.display = 'flex';
+                document.getElementById('auth-btn').innerText = "OPERATOR: ADMIN";
+                navigateTo('admin'); // Redirect to Admin Page
+                renderAdminList();
+            } else {
+                alert("VOID: Unauthorized Credentials.");
+            }
+        }
+
+        function logout() {
+            isAdmin = false;
+            document.getElementById('admin-nav-item').style.display = 'none';
+            document.getElementById('auth-btn').innerText = "Initialize Access";
+            navigateTo('home');
+        }
+
+        // Playback Redirection Engine
+        function initiatePlayback(movieId) {
+            const movie = movies.find(m => m.id === movieId);
+            if (!movie) { navigateTo('home'); return; }
+
+            document.getElementById('player-title').innerText = movie.title;
+            document.getElementById('video-surface').style.backgroundImage = `url(${movie.backdrop})`;
+            document.getElementById('post-watch').classList.add('hidden');
+            
+            // Next Auto-Sequence
+            const next = movies[(movie.id + 1) % movies.length];
+            document.getElementById('up-next-title').innerText = next.title;
+            document.getElementById('up-next-img').src = next.poster;
+            document.getElementById('up-next-card').onclick = () => navigateTo('playback', next.id);
+
+            // Simulate loading and playback
+            let progress = 0;
+            clearInterval(playbackInterval);
+            playbackInterval = setInterval(() => {
+                progress += 0.5;
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+                document.getElementById('player-timer').innerText = `00:${Math.floor(progress).toString().padStart(2, '0')} / 00:59`;
+                
+                if (progress >= 100) {
+                    clearInterval(playbackInterval);
+                    document.getElementById('post-watch').classList.remove('hidden');
+                }
+            }, 100);
+        }
+
+        function handleRating(type) {
+            alert(`VOID Feedback Received: ${type.toUpperCase()}`);
+            navigateTo('home');
+        }
+
+        // Admin Actions
+        function adminAddMovie() {
+            const movie = {
+                id: movies.length,
+                title: document.getElementById('adm-title').value,
+                genre: document.getElementById('adm-genre').value,
+                year: document.getElementById('adm-year').value,
+                poster: document.getElementById('adm-poster').value || "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2070",
+                backdrop: document.getElementById('adm-poster').value || "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2070",
+                plot: document.getElementById('adm-plot').value,
+                type: "Movie", quality: "4K", tag: "ADMIN UPLOAD"
+            };
+            movies.push(movie);
+            renderAdminList();
+            renderMovies('movie-grid', movies);
+            alert("VOID: Database injection complete.");
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-movie-list');
+            list.innerHTML = movies.map(m => `
+                <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                    <div class="flex items-center">
+                        <img src="${m.poster}" class="w-10 h-14 object-cover rounded mr-4">
+                        <div><p class="font-bold text-xs uppercase">${m.title}</p><p class="text-[9px] opacity-40">${m.genre} • ${m.year}</p></div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function openMovie(id) {
+        function renderMovies(targetId, data) {
+            const container = document.getElementById(targetId);
+            container.innerHTML = data.map(m => `
+                <div class="movie-card" onclick="openDetails(${m.id})">
+                    <div class="aspect-[2/3] rounded-2xl overflow-hidden mb-6 shadow-2xl border border-white/5 bg-white/5"><img src="${m.poster}" class="w-full h-full object-cover"></div>
+                    <div class="px-2">
+                        <h4 class="font-black text-[10px] uppercase tracking-[3px] truncate mb-2">${m.title}</h4>
+                        <div class="flex justify-between items-center opacity-30"><span class="text-[9px] font-bold">${m.year}</span><span class="text-[9px] font-bold">${m.genre}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openDetails(id) {
             const m = movies.find(x => x.id === id);
             document.getElementById('detail-backdrop').src = m.backdrop;
             document.getElementById('detail-title').innerText = m.title;
             document.getElementById('detail-plot').innerText = m.plot;
-            document.getElementById('detail-meta').innerText = `${m.year} • ${m.genre} • ${m.quality} • ${m.type}`;
-            document.getElementById('detail-tag').innerText = m.tag;
-            switchView('details');
+            document.getElementById('start-stream-btn').onclick = () => navigateTo('playback', m.id);
+            navigateTo('details');
         }
 
-        function switchView(viewId) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-                if(link.dataset.view === viewId) link.classList.add('active');
-            });
-            
-            if (viewId === 'search') {
-                const searchInput = document.getElementById('search-input');
-                searchInput.value = '';
-                renderMovies('search-results', movies);
-                searchInput.focus();
-            }
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function handleLogin() {
-            alert("Connecting to VOID authentication terminal...");
-        }
-
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            const filtered = movies.filter(m => 
-                m.title.toLowerCase().includes(query) || 
-                m.genre.toLowerCase().includes(query)
-            );
-            renderMovies('search-results', filtered);
-        });
-
-        function startPlayback() { alert("Initiating Data Stream from Zero Point..."); }
-
+        // Initial setup
+        window.addEventListener('hashchange', router);
         window.onload = () => {
-            initSlider();
+            router();
             renderMovies('movie-grid', movies);
-            setInterval(nextSlide, 9000);
-        }
+            
+            // Hero
+            document.getElementById('hero-slider').innerHTML = movies.slice(0, 1).map(m => `
+                <div class="hero-slide active">
+                    <img src="${m.backdrop}" class="absolute inset-0 w-full h-full object-cover grayscale-[30%]">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-end text-center pb-24 px-8">
+                        <div class="slide-content active max-w-4xl">
+                            <h2 class="premium-font text-8xl font-black mb-6 hero-title uppercase leading-[0.9]">${m.title}</h2>
+                            <button onclick="openDetails(${m.id})" class="bg-[#ff3e00] text-white px-12 py-5 rounded-full font-black uppercase tracking-[4px] text-[10px] shadow-2xl">View Transmission</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
     </script>
 </body>
 </html>

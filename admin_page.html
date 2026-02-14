@@ -43,7 +43,7 @@
         .status-pulse { width: 10px; height: 10px; border-radius: 50%; }
         .status-online { background: #00ff41; box-shadow: 0 0 10px #00ff41; animation: pulse 2s infinite; }
         .status-offline { background: #ff3e00; box-shadow: 0 0 10px #ff3e00; }
-        .status-warn { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
+        .status-local { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
@@ -58,7 +58,10 @@
             justify-content: center;
             background: rgba(255,255,255,0.01);
         }
-        .file-upload-zone:hover { border-color: var(--admin-blue); background: rgba(0, 112, 255, 0.05); }
+        .file-upload-zone:hover {
+            border-color: var(--admin-blue);
+            background: rgba(0, 112, 255, 0.05);
+        }
         
         .preview-img { width: 100%; height: 100%; object-fit: cover; }
         .ratio-portrait { aspect-ratio: 9/16; }
@@ -105,7 +108,7 @@
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0070ff] to-[#00c6ff] flex items-center justify-center font-black text-xs text-white">AD</div>
                 <div class="ml-3 hidden lg:block overflow-hidden">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-white">Root Admin</p>
-                    <p class="text-[8px] text-white/40 truncate" id="auth-uid">ID: Loading...</p>
+                    <p class="text-[8px] text-white/40 truncate" id="auth-uid">ID: Identifying...</p>
                 </div>
             </div>
             <a href="index.html" class="block w-full py-3 text-center text-[9px] uppercase tracking-[3px] text-white/20 hover:text-[#ff3e00] transition-colors">Disconnect</a>
@@ -117,7 +120,7 @@
         <div id="view-dashboard" class="view-section active">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">System Overview</h2>
-                <p class="text-white/40 text-sm mt-2">Linked Repository: <span class="text-blue-400">manaskrishnnapranavam-sys/Void</span></p>
+                <p class="text-white/40 text-sm mt-2">Active Protocol: <span class="text-blue-400" id="protocol-name">Detecting...</span></p>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -126,19 +129,19 @@
                     <p class="text-5xl font-black premium-font" id="stat-movies">0</p>
                 </div>
                 <div class="admin-card p-8 border-white/5">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Active Operators</p>
-                    <p class="text-5xl font-black premium-font" id="stat-users">0</p>
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Data Source</p>
+                    <p class="text-5xl font-black premium-font" id="stat-source">--</p>
                 </div>
                 <div class="admin-card p-8 border-white/5">
                     <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2 font-bold">Sync Status</p>
-                    <p class="text-5xl font-black premium-font" id="stat-sync">Pending</p>
+                    <p class="text-5xl font-black premium-font text-[#00ff41]" id="stat-sync">Waiting</p>
                 </div>
             </div>
 
             <div class="admin-card p-10 border-white/5">
                 <h4 class="premium-font text-xs font-bold uppercase tracking-[4px] text-white/40 mb-6">Recent Deployments</h4>
                 <div id="dashboard-recent-list" class="space-y-4">
-                    <p class="text-white/20 italic text-xs">Waiting for GitHub sync...</p>
+                    <p class="text-white/20 italic text-xs">Waiting for data stream...</p>
                 </div>
             </div>
         </div>
@@ -161,17 +164,17 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Movie Title</label>
-                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. DARK MATTER">
+                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. ZERO POINT">
                             </div>
                             <div>
                                 <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Genre</label>
-                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. THRILLER">
+                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="e.g. SCI-FI">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster</label>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster (9:16)</label>
                                 <div class="file-upload-zone ratio-portrait rounded-xl" onclick="document.getElementById('portrait-input').click()">
                                     <input type="file" id="portrait-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'portrait')">
                                     <div id="portrait-preview-container" class="hidden w-full h-full">
@@ -185,7 +188,7 @@
                             </div>
                             <div class="flex flex-col gap-4">
                                 <div>
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop (16:9)</label>
                                     <div class="file-upload-zone ratio-landscape rounded-xl" onclick="document.getElementById('landscape-input').click()">
                                         <input type="file" id="landscape-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'landscape')">
                                         <div id="landscape-preview-container" class="hidden w-full h-full">
@@ -198,11 +201,11 @@
                                     <input type="hidden" id="m-poster-landscape">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Asset Filename (.mp4)</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Asset Filename (MP4)</label>
                                     <div class="file-upload-zone rounded-xl h-[120px]" onclick="document.getElementById('video-input').click()">
                                         <input type="file" id="video-input" accept="video/mp4" class="hidden" onchange="handleVideoUpload(this)">
                                         <div id="video-status" class="text-center p-4">
-                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Attach Movie</p>
+                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Attach .mp4</p>
                                         </div>
                                     </div>
                                     <input type="hidden" id="m-video-url">
@@ -211,13 +214,13 @@
                         </div>
 
                         <div>
-                            <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Plot Summary</label>
+                            <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Plot Synopsis</label>
                             <textarea id="m-plot" class="w-full p-4 rounded-xl text-sm h-28" placeholder="Enter story details..."></textarea>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility</label>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility Tier</label>
                                 <select id="m-target" class="w-full p-4 rounded-xl text-sm appearance-none cursor-pointer">
                                     <option value="public">Standard</option>
                                     <option value="premium">Premium Only</option>
@@ -243,106 +246,241 @@
 
         <div id="view-users" class="view-section">
             <header class="mb-12">
-                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Operator Registry</h2>
-                <p class="text-white/40 text-sm mt-2">Historical log of authenticated system access.</p>
+                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Identity Database</h2>
+                <p class="text-white/40 text-sm mt-2">Active registry of platform operators.</p>
             </header>
             <div class="admin-card overflow-hidden border-white/5">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-white/5 text-[10px] uppercase tracking-[3px] text-white/40">
                         <tr>
-                            <th class="p-6">Operator ID</th>
+                            <th class="p-6">Operator UID</th>
                             <th class="p-6">Access Group</th>
                             <th class="p-6 text-right">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="user-list" class="divide-y divide-white/5">
-                        <!-- Data injected here -->
-                    </tbody>
+                    <tbody id="user-list" class="divide-y divide-white/5"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
+    <!-- Main Logic Module -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURATION
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        // DYNAMIC REPO PATHING
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-master-system';
+        // --- ENVIRONMENT SAFETY CHECK ---
+        let app, auth, db;
+        let isCloudMode = false;
+        const appId = 'void-master-system'; // Consistent App ID
 
-        let user = null;
-        let connectionRetry = 0;
-
-        // AUTHENTICATION LOOP
-        const authenticate = async () => {
+        async function initSystem() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                // Try to load Firebase Config (Fails on GitHub)
+                if (typeof __firebase_config !== 'undefined') {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    isCloudMode = true;
+                    
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 } else {
-                    await signInAnonymously(auth);
+                    throw new Error("No Cloud Config Found");
                 }
             } catch (err) {
-                console.error("Auth Error:", err);
-                document.getElementById('connection-text').innerText = "Auth Offline";
-                document.getElementById('connection-pulse').classList.add('status-offline');
+                console.log("Switching to Local Mode:", err);
+                enableLocalMode();
             }
-        };
+        }
 
-        onAuthStateChanged(auth, (u) => {
-            user = u;
-            if (user) {
-                document.getElementById('auth-uid').innerText = `ID: ${user.uid.substring(0,8)}...`;
-                document.getElementById('connection-pulse').className = 'status-pulse status-online mr-2';
-                document.getElementById('connection-text').innerText = "GitHub Connected";
-                document.getElementById('connection-text').style.color = "#00ff41";
-                document.getElementById('stat-sync').innerText = "Live";
-                document.getElementById('stat-sync').style.color = "#00ff41";
+        // --- FIREBASE LISTENERS (Cloud Mode) ---
+        onAuthStateChanged(getAuth(app) || {}, (user) => {
+            if (isCloudMode && user) {
+                updateStatus("Cloud Connected", "status-online", "#00ff41", `ID: ${user.uid.substring(0,8)}`);
+                document.getElementById('protocol-name').innerText = "Firebase Cloud";
+                document.getElementById('stat-source').innerText = "Cloud";
                 
-                // Track this admin session
-                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', user.uid), {
-                    userId: user.uid,
-                    lastSeen: serverTimestamp()
-                }, { merge: true });
-
-                initDataStreams();
+                // Real Listeners
+                const movieRef = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
+                onSnapshot(movieRef, (snap) => {
+                    const movies = [];
+                    snap.forEach(d => movies.push({id: d.id, ...d.data()}));
+                    refreshUI(movies);
+                });
             }
         });
 
-        // DATA FLOW
-        function initDataStreams() {
-            if (!user) return;
-
-            // Movies Stream
-            const movieRef = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
-            onSnapshot(movieRef, (snapshot) => {
-                const movies = [];
-                snapshot.forEach(doc => movies.push({ id: doc.id, ...doc.data() }));
-                renderMovies(movies);
-                document.getElementById('stat-movies').innerText = movies.length;
-            }, (err) => {
-                console.warn("Retrying collection link...", err);
-                // If the collection doesn't exist yet, we stay in 'Ready' mode
-                document.getElementById('stat-movies').innerText = "0";
-            });
-
-            // Sessions Stream
-            const sessionRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
-            onSnapshot(sessionRef, (snapshot) => {
-                const sessions = [];
-                snapshot.forEach(doc => sessions.push({ id: doc.id, ...doc.data() }));
-                renderSessions(sessions);
-                document.getElementById('stat-users').innerText = sessions.length;
-            });
+        // --- LOCAL STORAGE MODE (GitHub Fallback) ---
+        function enableLocalMode() {
+            updateStatus("Local Persistence", "status-local", "#ffcc00", "ID: LOCAL-ADMIN");
+            document.getElementById('protocol-name').innerText = "Local Storage (GitHub)";
+            document.getElementById('stat-source').innerText = "Local";
+            document.getElementById('stat-sync').innerText = "Active";
+            document.getElementById('stat-sync').style.color = "#ffcc00";
+            
+            // Load from LocalStorage
+            const localData = JSON.parse(localStorage.getItem('void_movies') || '[]');
+            refreshUI(localData);
         }
 
-        // HANDLERS
+        // --- SHARED UI UPDATERS ---
+        function updateStatus(text, pulseClass, color, uid) {
+            document.getElementById('connection-text').innerText = text;
+            document.getElementById('connection-text').style.color = color;
+            document.getElementById('connection-pulse').className = `status-pulse ${pulseClass} mr-2`;
+            document.getElementById('auth-uid').innerText = uid;
+        }
+
+        function refreshUI(movies) {
+            renderMovies(movies);
+            document.getElementById('stat-movies').innerText = movies.length;
+            
+            const recent = [...movies].sort((a,b) => (b.timestamp?.seconds || b.timestamp) - (a.timestamp?.seconds || a.timestamp)).slice(0,3);
+            const dashList = document.getElementById('dashboard-recent-list');
+            
+            if(recent.length === 0) {
+                dashList.innerHTML = '<p class="text-white/20 italic text-xs">No deployments found.</p>';
+            } else {
+                dashList.innerHTML = recent.map(m => `
+                    <div class="flex items-center justify-between text-xs py-2 border-b border-white/5">
+                        <span class="text-white font-bold">${m.title}</span>
+                        <span class="text-white/20 uppercase text-[9px]">Deployed</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // --- UNIFIED ACTION HANDLERS ---
+        window.saveMovie = async () => {
+            const id = document.getElementById('edit-id').value;
+            const data = {
+                title: document.getElementById('m-title').value.toUpperCase(),
+                genre: document.getElementById('m-genre').value.toUpperCase(),
+                posterPortrait: document.getElementById('m-poster-portrait').value,
+                posterLandscape: document.getElementById('m-poster-landscape').value,
+                videoUrl: document.getElementById('m-video-url').value,
+                plot: document.getElementById('m-plot').value,
+                target: document.getElementById('m-target').value,
+                timestamp: Date.now() // Local timestamp compatible
+            };
+
+            if (!data.title) return alert("Title Required");
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
+            if (isCloudMode) {
+                try {
+                    if (id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id), data);
+                    else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
+                } catch(e) { alert("Cloud Error"); }
+            } else {
+                // Local Save Logic
+                let localMovies = JSON.parse(localStorage.getItem('void_movies') || '[]');
+                if (id) {
+                    const idx = localMovies.findIndex(m => m.id === id);
+                    if(idx !== -1) localMovies[idx] = { ...localMovies[idx], ...data };
+                } else {
+                    data.id = 'loc_' + Date.now();
+                    localMovies.push(data);
+                }
+                localStorage.setItem('void_movies', JSON.stringify(localMovies));
+                refreshUI(localMovies);
+            }
+
+            resetForm();
+            btn.innerText = "Push to GitHub";
+            btn.disabled = false;
+            switchView('dashboard');
+        };
+
+        window.deleteMovie = async (id) => {
+            if(!confirm("Purge asset?")) return;
+            
+            if (isCloudMode) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
+            } else {
+                let localMovies = JSON.parse(localStorage.getItem('void_movies') || '[]');
+                localMovies = localMovies.filter(m => m.id !== id);
+                localStorage.setItem('void_movies', JSON.stringify(localMovies));
+                refreshUI(localMovies);
+            }
+        };
+
+        window.editMovie = async (id) => {
+            let data;
+            if (isCloudMode) {
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
+                data = snap.data();
+            } else {
+                const localMovies = JSON.parse(localStorage.getItem('void_movies') || '[]');
+                data = localMovies.find(m => m.id === id);
+            }
+
+            if (data) {
+                document.getElementById('edit-id').value = id;
+                document.getElementById('m-title').value = data.title;
+                document.getElementById('m-genre').value = data.genre;
+                document.getElementById('m-poster-portrait').value = data.posterPortrait;
+                document.getElementById('m-poster-landscape').value = data.posterLandscape;
+                document.getElementById('m-video-url').value = data.videoUrl;
+                document.getElementById('m-plot').value = data.plot;
+                document.getElementById('m-target').value = data.target;
+
+                if(data.posterPortrait) {
+                    document.getElementById('portrait-preview').src = data.posterPortrait;
+                    document.getElementById('portrait-preview-container').classList.remove('hidden');
+                    document.getElementById('portrait-placeholder').classList.add('hidden');
+                }
+                if(data.posterLandscape) {
+                    document.getElementById('landscape-preview').src = data.posterLandscape;
+                    document.getElementById('landscape-preview-container').classList.remove('hidden');
+                    document.getElementById('landscape-placeholder').classList.add('hidden');
+                }
+                
+                document.getElementById('form-title').innerText = "Modifying Asset";
+                document.getElementById('btn-submit').innerText = "Update";
+                document.getElementById('btn-cancel').classList.remove('hidden');
+                switchView('editor');
+            }
+        };
+
+        // --- GLOBAL HELPERS (View/Reset) ---
+        window.resetForm = () => {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('m-title').value = "";
+            document.getElementById('m-genre').value = "";
+            document.getElementById('m-poster-portrait').value = "";
+            document.getElementById('m-poster-landscape').value = "";
+            document.getElementById('m-video-url').value = "";
+            document.getElementById('m-plot').value = "";
+            document.getElementById('portrait-preview-container').classList.add('hidden');
+            document.getElementById('portrait-placeholder').classList.remove('hidden');
+            document.getElementById('landscape-preview-container').classList.add('hidden');
+            document.getElementById('landscape-placeholder').classList.remove('hidden');
+            document.getElementById('video-filename').innerText = "Attach .mp4";
+            document.getElementById('video-filename').style.color = "";
+            document.getElementById('form-title').innerText = "New Transmission";
+            document.getElementById('btn-submit').innerText = "Push to GitHub";
+            document.getElementById('btn-cancel').classList.add('hidden');
+        };
+
+        window.switchView = (id) => {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${id}`).classList.add('active');
+            document.querySelectorAll('.sidebar-item').forEach(s => {
+                s.classList.remove('active');
+                if(s.dataset.view === id) s.classList.add('active');
+            });
+        };
+
         window.handleImageUpload = (input, type) => {
             const file = input.files[0];
             if (file) {
@@ -368,48 +506,12 @@
             }
         };
 
-        window.saveMovie = async () => {
-            if (!user) return;
-            const id = document.getElementById('edit-id').value;
-            const data = {
-                title: document.getElementById('m-title').value.toUpperCase(),
-                genre: document.getElementById('m-genre').value.toUpperCase(),
-                posterPortrait: document.getElementById('m-poster-portrait').value,
-                posterLandscape: document.getElementById('m-poster-landscape').value,
-                videoUrl: document.getElementById('m-video-url').value,
-                plot: document.getElementById('m-plot').value,
-                target: document.getElementById('m-target').value,
-                timestamp: serverTimestamp()
-            };
-
-            if (!data.title) return alert("Asset Title Required");
-
-            const btn = document.getElementById('btn-submit');
-            btn.innerText = "PUSHING...";
-            btn.disabled = true;
-
-            try {
-                if (id) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id), data);
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
-                }
-                resetForm();
-                switchView('dashboard');
-            } catch (err) { alert("Push failed. Check connection."); }
-            btn.innerText = "Push to GitHub";
-            btn.disabled = false;
-        };
-
         function renderMovies(movies) {
             const list = document.getElementById('admin-movie-list');
-            const dashboardList = document.getElementById('dashboard-recent-list');
-            
             if (!movies.length) {
-                list.innerHTML = `<div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">Repository Empty. Ready for deployment.</div>`;
+                list.innerHTML = `<div class="text-white/10 italic text-xs p-12 text-center border border-dashed border-white/5 rounded-3xl">Repository Empty.</div>`;
                 return;
             }
-
             list.innerHTML = movies.map(m => `
                 <div class="admin-card p-4 flex items-center justify-between border-white/5 group">
                     <div class="flex items-center space-x-4">
@@ -425,86 +527,10 @@
                     </div>
                 </div>
             `).join('');
-
-            const sorted = [...movies].sort((a,b) => b.timestamp - a.timestamp).slice(0,3);
-            dashboardList.innerHTML = sorted.map(m => `
-                <div class="flex items-center justify-between text-xs py-2 border-b border-white/5">
-                    <span class="text-white font-bold">${m.title}</span>
-                    <span class="text-white/20 uppercase text-[9px]">Deployed to GitHub</span>
-                </div>
-            `).join('');
         }
 
-        function renderSessions(sessions) {
-            const list = document.getElementById('user-list');
-            list.innerHTML = sessions.map(s => `
-                <tr class="group hover:bg-white/[0.02]">
-                    <td class="p-6 font-mono text-xs text-white/40">${s.userId}</td>
-                    <td class="p-6 text-[10px] font-black text-white/60 uppercase">Admin Operator</td>
-                    <td class="p-6 text-right"><span class="px-3 py-1 bg-[#00ff41]/10 text-[#00ff41] rounded-full text-[8px] font-black uppercase">Active</span></td>
-                </tr>
-            `).join('');
-        }
-
-        window.editMovie = async (id) => {
-            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
-            if (snap.exists()) {
-                const d = snap.data();
-                document.getElementById('edit-id').value = id;
-                document.getElementById('m-title').value = d.title;
-                document.getElementById('m-genre').value = d.genre;
-                document.getElementById('m-poster-portrait').value = d.posterPortrait;
-                document.getElementById('m-poster-landscape').value = d.posterLandscape;
-                document.getElementById('m-video-url').value = d.videoUrl;
-                document.getElementById('m-plot').value = d.plot;
-                document.getElementById('m-target').value = d.target;
-
-                if(d.posterPortrait) {
-                    document.getElementById('portrait-preview').src = d.posterPortrait;
-                    document.getElementById('portrait-preview-container').classList.remove('hidden');
-                    document.getElementById('portrait-placeholder').classList.add('hidden');
-                }
-                
-                document.getElementById('form-title').innerText = "Modifying Asset";
-                document.getElementById('btn-submit').innerText = "Update GitHub";
-                document.getElementById('btn-cancel').classList.remove('hidden');
-                switchView('editor');
-            }
-        };
-
-        window.deleteMovie = async (id) => {
-            if (confirm("Delete this asset forever?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
-            }
-        };
-
-        window.resetForm = () => {
-            document.getElementById('edit-id').value = "";
-            document.getElementById('m-title').value = "";
-            document.getElementById('m-genre').value = "";
-            document.getElementById('m-poster-portrait').value = "";
-            document.getElementById('m-poster-landscape').value = "";
-            document.getElementById('m-video-url').value = "";
-            document.getElementById('m-plot').value = "";
-            document.getElementById('portrait-preview-container').classList.add('hidden');
-            document.getElementById('portrait-placeholder').classList.remove('hidden');
-            document.getElementById('video-filename').innerText = "Attach Movie";
-            document.getElementById('video-filename').style.color = "";
-            document.getElementById('form-title').innerText = "New Transmission";
-            document.getElementById('btn-submit').innerText = "Push to GitHub";
-            document.getElementById('btn-cancel').classList.add('hidden');
-        };
-
-        window.switchView = (id) => {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${id}`).classList.add('active');
-            document.querySelectorAll('.sidebar-item').forEach(s => {
-                s.classList.remove('active');
-                if(s.dataset.view === id) s.classList.add('active');
-            });
-        };
-
-        authenticate();
+        // Start System
+        initSystem();
     </script>
 </body>
 </html>

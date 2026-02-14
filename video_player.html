@@ -3,326 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOID | Playback Terminal</title>
+    <title>VOID | Cinema Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Integration with your main database file -->
+    <!-- Load the shared database -->
     <script src="void_data.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #ff3e00;
+            --bg: #050505;
         }
-        body { background: #000; color: white; margin: 0; overflow-x: hidden; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling while watching */
+        }
+
         .premium-font { font-family: 'Outfit', sans-serif; }
 
-        .player-wrapper { position: relative; width: 100vw; height: 100vh; background: #000; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: contain; z-index: 1; }
-
-        /* UI Overlays */
-        .ui-layer { 
-            position: absolute; inset: 0; 
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%, rgba(0,0,0,0.4) 100%);
-            opacity: 0; transition: opacity 0.5s ease; z-index: 10;
-        }
-        .player-wrapper:hover .ui-layer, .ui-layer.active { opacity: 1; }
-
-        /* End Screen */
-        #end-screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(30px); z-index: 50; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            animation: fadeIn 0.8s ease;
+        /* Custom Video UI */
+        .player-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .star-rating button { transition: all 0.2s ease; color: rgba(255,255,255,0.1); }
-        .star-rating button:hover, .star-rating button.selected { color: var(--accent); transform: scale(1.3); text-shadow: 0 0 15px var(--accent); }
-
-        .recommendation-card { 
-            width: 180px; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); 
-            filter: grayscale(1) opacity(0.4);
-        }
-        .recommendation-card:hover { 
-            filter: grayscale(0) opacity(1); transform: translateY(-10px) scale(1.05); 
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* Custom Video Progress Bar */
-        .progress-bar-container {
-            height: 6px; background: rgba(255,255,255,0.1);
-            position: absolute; bottom: 100px; left: 60px; right: 60px;
-            cursor: pointer; border-radius: 10px; overflow: hidden;
+        /* Netflix-style Overlays */
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .player-wrapper:hover .video-overlay,
+        .player-wrapper.touch-active .video-overlay {
+            opacity: 1;
+        }
+
+        .control-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            position: relative;
+            cursor: pointer;
+            border-radius: 2px;
             transition: height 0.2s;
         }
-        .progress-bar-container:hover { height: 10px; }
-        
-        #current-progress {
-            height: 100%; background: var(--accent); width: 0%;
-            box-shadow: 0 0 20px var(--accent); border-radius: 10px;
+
+        .progress-container:hover { height: 6px; }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            border-radius: 2px;
+            position: relative;
         }
 
-        /* Error Message Style */
-        #error-overlay {
-            position: absolute; inset: 0; background: #000; z-index: 100;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .icon-btn {
+            transition: transform 0.2s, color 0.2s;
+            cursor: pointer;
+        }
+
+        .icon-btn:hover {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        #error-screen {
+            position: absolute;
+            inset: 0;
+            background: #050505;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div id="error-overlay">
-        <h2 class="premium-font text-4xl font-black text-[#ff3e00] mb-4">MEDIA_OFFLINE</h2>
-        <p class="text-white/40 uppercase tracking-[4px] text-[10px] mb-8">Protocol could not locate the mp4 source file</p>
-        <a href="index.html" class="px-8 py-3 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-[2px] hover:bg-white hover:text-black transition-all">Return to Dashboard</a>
+    <div id="error-screen">
+        <h1 class="premium-font text-4xl font-black text-[#ff3e00] mb-4">SIGNAL LOST</h1>
+        <p class="text-white/40 mb-8 uppercase tracking-[3px]">The requested file is not readable or missing.</p>
+        <a href="index.html" class="px-8 py-3 border border-white/20 rounded-full hover:bg-white hover:text-black transition-all uppercase text-xs font-bold tracking-widest">Return to Base</a>
     </div>
 
     <div class="player-wrapper" id="player-container">
-        <!-- The Video Engine -->
-        <video id="main-video" preload="auto">
+        <video id="main-video" playsinline>
             <source id="video-source" src="" type="video/mp4">
-            Your browser does not support the video tag.
         </video>
 
-        <!-- UI HUD -->
-        <div class="ui-layer" id="hud">
-            <div class="p-10 flex justify-between items-start w-full">
-                <a href="index.html" class="group flex items-center text-[10px] font-black uppercase tracking-[4px] text-white/40 hover:text-white transition-all">
-                    <svg class="w-5 h-5 mr-3 group-hover:-translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="3" stroke-linecap="round"/></svg>
-                    Terminate Session
-                </a>
-                
-                <div class="flex items-center space-x-6">
-                    <div class="text-right">
-                        <p id="player-title" class="premium-font text-2xl font-black uppercase tracking-tighter">Syncing Database...</p>
-                        <p id="quality-label" class="text-[9px] text-[#ff3e00] font-bold uppercase tracking-[2px]">Encrypted Stream • 4K</p>
+        <!-- Premium Overlay Controls -->
+        <div class="video-overlay">
+            <!-- Top Bar -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <a href="index.html" class="icon-btn">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round"/></svg>
+                    </a>
+                    <div>
+                        <h2 id="movie-title" class="premium-font text-xl font-bold tracking-tight">LOADING...</h2>
+                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Streaming Local Sync</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Controls Area -->
-            <div class="absolute bottom-0 left-0 w-full p-10 pb-16">
-                <div class="flex items-center justify-between mb-8 px-6">
-                    <div class="flex items-center space-x-10">
-                        <button onclick="togglePlay()" id="play-pause-btn" class="text-white hover:text-[#ff3e00] transition-all transform hover:scale-110">
-                            <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                        
-                        <div class="flex items-center space-x-4 text-[11px] font-mono text-white/50">
-                            <span id="time-current">00:00</span>
-                            <span class="opacity-20">/</span>
-                            <span id="time-total">00:00</span>
+            <!-- Bottom Bar -->
+            <div class="space-y-6">
+                <!-- Progress -->
+                <div class="progress-container" id="seek-container">
+                    <div class="progress-bar" id="progress-fill"></div>
+                </div>
+
+                <div class="control-bar">
+                    <!-- Play/Pause -->
+                    <button id="play-pause" class="icon-btn">
+                        <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="pause-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+
+                    <!-- Volume -->
+                    <div class="flex items-center gap-3">
+                        <svg class="w-6 h-6 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        <div class="w-20 h-1 bg-white/20 rounded-full">
+                            <div class="w-2/3 h-full bg-white rounded-full"></div>
                         </div>
                     </div>
-                    
-                    <div class="flex items-center space-x-12">
-                        <div class="group relative">
-                            <button class="text-[10px] font-black uppercase tracking-[3px] text-white/40 hover:text-white transition-colors">Visual Quality</button>
-                            <div class="absolute bottom-full right-0 mb-6 bg-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 hidden group-hover:block w-40 shadow-2xl">
-                                <button class="flex items-center justify-between w-full text-left text-[9px] font-bold py-3 text-[#ff3e00] uppercase tracking-widest">
-                                    <span>2160p Ultra</span>
-                                    <div class="w-1 h-1 bg-[#ff3e00] rounded-full"></div>
-                                </button>
-                                <button class="block w-full text-left text-[9px] font-bold py-3 opacity-40 hover:opacity-100 uppercase tracking-widest transition-all">1080p High</button>
-                                <button class="block w-full text-left text-[9px] font-bold py-3 opacity-40 hover:opacity-100 uppercase tracking-widest transition-all">720p Data Save</button>
-                            </div>
-                        </div>
-                        
-                        <button onclick="toggleFullscreen()" class="text-white/40 hover:text-white transition-all transform hover:scale-110">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5"/></svg>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="progress-bar-container" id="progress-container">
-                    <div id="current-progress"></div>
-                </div>
-            </div>
-        </div>
 
-        <!-- End of Video Screen -->
-        <div id="end-screen">
-            <div class="text-center mb-16">
-                <h2 class="premium-font text-6xl font-black uppercase tracking-tighter mb-4">Protocol Finished</h2>
-                <p class="text-white/30 text-[10px] uppercase tracking-[6px]">Evaluate the neural experience</p>
-            </div>
+                    <div class="flex-grow"></div>
 
-            <!-- Rating System -->
-            <div class="star-rating flex space-x-6 mb-24" id="rating-stars">
-                <button onclick="rate(1)" class="text-5xl">✦</button>
-                <button onclick="rate(2)" class="text-5xl">✦</button>
-                <button onclick="rate(3)" class="text-5xl">✦</button>
-                <button onclick="rate(4)" class="text-5xl">✦</button>
-                <button onclick="rate(5)" class="text-5xl">✦</button>
-            </div>
+                    <span class="text-xs font-mono opacity-60" id="time-display">00:00 / 00:00</span>
 
-            <!-- Watch More Section -->
-            <div class="w-full px-20 max-w-7xl">
-                <div class="flex items-center justify-between mb-10">
-                    <p class="text-[11px] font-black uppercase tracking-[6px] text-[#ff3e00]">Next Up in VOID</p>
-                    <div class="h-[1px] flex-grow mx-10 bg-white/10"></div>
+                    <button id="fullscreen-btn" class="icon-btn">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
                 </div>
-                <div id="more-movies" class="flex justify-center space-x-10">
-                    <!-- Dynamic recommendations from void_data.js -->
-                </div>
-            </div>
-
-            <div class="flex space-x-12 mt-20">
-                <button onclick="location.reload()" class="text-[10px] font-black uppercase tracking-[4px] text-white/40 hover:text-white transition-all border-b border-white/0 hover:border-white pb-1">Replay</button>
-                <a href="index.html" class="text-[10px] font-black uppercase tracking-[4px] text-white/40 hover:text-white transition-all border-b border-white/0 hover:border-white pb-1">Exit to Menu</a>
             </div>
         </div>
     </div>
 
     <script>
         const video = document.getElementById('main-video');
-        const progress = document.getElementById('current-progress');
-        const hud = document.getElementById('hud');
-        let currentMovie = null;
+        const playPauseBtn = document.getElementById('play-pause');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const progressBar = document.getElementById('progress-fill');
+        const seekContainer = document.getElementById('seek-container');
+        const timeDisplay = document.getElementById('time-display');
+        const titleEl = document.getElementById('movie-title');
+        const videoSource = document.getElementById('video-source');
+        const errorScreen = document.getElementById('error-screen');
 
-        function formatTime(seconds) {
-            const min = Math.floor(seconds / 60);
-            const sec = Math.floor(seconds % 60);
-            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-        }
+        function initPlayer() {
+            // Get ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const movieId = urlParams.get('id');
 
-        function loadVideoFromDB() {
-            // 1. Extract ID from URL (?id=xxxx)
-            const params = new URLSearchParams(window.location.search);
-            const movieId = params.get('id');
-            
-            // 2. Check if DB exists and Movie ID is valid
-            if (window.VOID_DB && movieId) {
-                currentMovie = window.VOID_DB.find(m => m.id === movieId);
-                
-                if (currentMovie) {
-                    // Update Page Title and UI
-                    document.title = `VOID | ${currentMovie.title}`;
-                    document.getElementById('player-title').innerText = currentMovie.title;
-                    
-                    // Set Video Source
-                    const source = document.getElementById('video-source');
-                    source.src = currentMovie.videoUrl; // Takes the path from your admin page entry
-                    
-                    video.load();
-                    video.play().catch(e => {
-                        console.log("Autoplay blocked or source error. Waiting for user interaction.");
-                    });
-                    
-                    loadRecommendations(movieId);
-                } else {
-                    showError();
-                }
+            if (!movieId || !window.VOID_DB) {
+                showError();
+                return;
+            }
+
+            // Find movie in VOID_DB (shared from void_data.js)
+            const movie = window.VOID_DB.find(m => String(m.id) === String(movieId));
+
+            if (!movie) {
+                showError();
+                return;
+            }
+
+            // Set Title
+            titleEl.innerText = movie.title.toUpperCase();
+
+            // Handle video path
+            // We assume if it's a local file name, it's in the current folder
+            if (movie.videoUrl) {
+                videoSource.src = movie.videoUrl;
+                video.load();
+                video.play().catch(() => {
+                    console.log("Autoplay blocked - user must click play");
+                });
             } else {
                 showError();
             }
         }
 
         function showError() {
-            document.getElementById('error-overlay').style.display = 'flex';
-            document.getElementById('player-container').style.display = 'none';
+            errorScreen.style.display = 'flex';
         }
 
-        // Recommendations Logic (Fetches others from JS file)
-        function loadRecommendations(excludeId) {
-            const otherMovies = window.VOID_DB.filter(m => m.id !== excludeId).slice(0, 5);
-            const container = document.getElementById('more-movies');
-            
-            if (otherMovies.length > 0) {
-                container.innerHTML = otherMovies.map(m => `
-                    <div class="recommendation-card cursor-pointer group" onclick="window.location.href='video_player.html?id=${m.id}'">
-                        <div class="aspect-[9/14] rounded-2xl overflow-hidden mb-5 border border-white/10 relative">
-                            <img src="${m.posterPortrait}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-[#ff3e00]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </div>
-                        </div>
-                        <p class="text-[9px] font-black uppercase tracking-[3px] text-center truncate px-2">${m.title}</p>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = `<p class="text-white/10 italic text-xs uppercase tracking-widest">Database isolated. No other movies found.</p>`;
-            }
-        }
-
-        // Playback Logic
+        // Toggle Play/Pause
         function togglePlay() {
-            const btn = document.getElementById('play-pause-btn');
             if (video.paused) {
                 video.play();
-                btn.innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
             } else {
                 video.pause();
-                btn.innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
             }
         }
 
-        video.addEventListener('loadedmetadata', () => {
-            document.getElementById('time-total').innerText = formatTime(video.duration);
-        });
+        playPauseBtn.addEventListener('click', togglePlay);
+        video.addEventListener('click', togglePlay);
 
+        // Update Progress
         video.addEventListener('timeupdate', () => {
-            const percentage = (video.currentTime / video.duration) * 100;
-            progress.style.width = percentage + '%';
-            document.getElementById('time-current').innerText = formatTime(video.currentTime);
+            const percent = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = `${percent}%`;
+            
+            const curMin = Math.floor(video.currentTime / 60);
+            const curSec = Math.floor(video.currentTime % 60);
+            const durMin = Math.floor(video.duration / 60) || 0;
+            const durSec = Math.floor(video.duration % 60) || 0;
+            
+            timeDisplay.innerText = `${String(curMin).padStart(2, '0')}:${String(curSec).padStart(2, '0')} / ${String(durMin).padStart(2, '0')}:${String(durSec).padStart(2, '0')}`;
         });
 
-        document.getElementById('progress-container').addEventListener('click', (e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
+        // Seek
+        seekContainer.addEventListener('click', (e) => {
+            const rect = seekContainer.getBoundingClientRect();
             const pos = (e.clientX - rect.left) / rect.width;
             video.currentTime = pos * video.duration;
         });
 
-        // Toggle Fullscreen
-        function toggleFullscreen() {
-            const container = document.getElementById('player-container');
+        // Fullscreen
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                container.requestFullscreen().catch(err => {
-                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
+                document.getElementById('player-container').requestFullscreen();
             } else {
                 document.exitFullscreen();
             }
-        }
+        });
 
-        // Video End Transition
-        video.onended = () => {
-            document.getElementById('end-screen').style.display = 'flex';
-            hud.style.display = 'none';
-            if (document.fullscreenElement) document.exitFullscreen();
-        };
+        // Hide overlay on inactivity
+        let timeout;
+        const playerWrapper = document.getElementById('player-container');
+        playerWrapper.addEventListener('mousemove', () => {
+            playerWrapper.classList.add('touch-active');
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                playerWrapper.classList.remove('touch-active');
+            }, 3000);
+        });
 
-        // Rating Interaction
-        function rate(stars) {
-            const btns = document.querySelectorAll('#rating-stars button');
-            btns.forEach((b, i) => {
-                if (i < stars) {
-                    b.classList.add('selected');
-                } else {
-                    b.classList.remove('selected');
-                }
-            });
-        }
-
-        // HUD Auto-hide Control
-        let hidetimer;
-        function resetHUDTimer() {
-            hud.classList.add('active');
-            clearTimeout(hidetimer);
-            if (!video.paused) {
-                hidetimer = setTimeout(() => {
-                    hud.classList.remove('active');
-                }, 4000);
-            }
-        }
-
-        document.addEventListener('mousemove', resetHUDTimer);
-        document.addEventListener('touchstart', resetHUDTimer);
-        video.onplay = resetHUDTimer;
-
-        // Initialize on load
-        window.onload = loadVideoFromDB;
+        window.onload = initPlayer;
     </script>
 </body>
 </html>

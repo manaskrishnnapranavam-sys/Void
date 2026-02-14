@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID | System Administrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #ff3e00;
+            --bg-deep: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --admin-blue: #0070ff;
+        }
+
+        body { background-color: var(--bg-deep); color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; }
+        .premium-font { font-family: 'Outfit', sans-serif; }
+
+        .sidebar { background: var(--glass); backdrop-filter: blur(25px); border-right: 1px solid var(--glass-border); z-index: 100; }
+        .sidebar-item { transition: all 0.3s ease; color: rgba(255,255,255,0.4); cursor: pointer; position: relative; }
+        .sidebar-item:hover, .sidebar-item.active { color: #ffffff; background: rgba(255,255,255,0.04); }
+        .sidebar-item.active::before { content: ''; position: absolute; left: 0; top: 25%; height: 50%; width: 3px; background-color: var(--admin-blue); box-shadow: 0 0 20px var(--admin-blue); }
+
+        .admin-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 1.5rem; }
+        
+        input, textarea, select {
+            background: rgba(0,0,0,0.4) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            color: white !important;
+            outline: none !important;
+        }
+        input:focus { border-color: var(--admin-blue) !important; }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .status-pulse {
+            width: 8px; height: 8px; background: #00ff41; border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); } }
+
+        .file-upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .file-upload-zone:hover {
+            border-color: var(--admin-blue);
+            background: rgba(0, 112, 255, 0.05);
+        }
+        
+        .preview-img { width: 100%; height: 100%; object-fit: cover; }
+        .ratio-portrait { aspect-ratio: 9/16; }
+        .ratio-landscape { aspect-ratio: 16/9; }
+
+        .github-tag {
+            background: #24292e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8">
+        <div class="w-full">
+            <div class="px-8 mb-12">
+                <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#0070ff]">.</span></h1>
+                <div class="flex items-center mt-2">
+                    <div class="status-pulse mr-2"></div>
+                    <span class="text-[8px] uppercase tracking-[3px] text-[#00ff41] font-bold">Admin Active</span>
+                </div>
+            </div>
+
+            <div class="w-full space-y-1">
+                <div class="px-8 py-2 text-[10px] uppercase tracking-[4px] text-white/20 font-bold">Navigation</div>
+                <div onclick="switchView('dashboard')" class="sidebar-item active flex items-center px-10 py-4 w-full" data-view="dashboard">
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">Main Dashboard</span>
+                </div>
+                
+                <div class="px-8 py-4 mt-4 text-[10px] uppercase tracking-[4px] text-white/20 font-bold">Management</div>
+                <div onclick="switchView('editor')" class="sidebar-item flex items-center px-10 py-4 w-full" data-view="editor">
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">Admin Editor</span>
+                </div>
+                <div onclick="switchView('users')" class="sidebar-item flex items-center px-10 py-4 w-full" data-view="users">
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">User Database</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6">
+            <div class="flex items-center p-3 bg-white/5 rounded-2xl border border-white/10 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0070ff] to-[#00c6ff] flex items-center justify-center font-black text-xs">AD</div>
+                <div class="ml-3 hidden lg:block">
+                    <p class="text-[10px] font-bold uppercase tracking-wider">Root Admin</p>
+                    <p class="text-[8px] text-white/40" id="auth-status">Verifying...</p>
+                </div>
+            </div>
+            <a href="index.html" class="block w-full py-3 text-center text-[9px] uppercase tracking-[3px] text-white/20 hover:text-[#ff3e00] transition-colors">Disconnect</a>
+        </div>
+    </nav>
+
+    <main class="ml-20 lg:ml-64 p-8 lg:p-16">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="view-section active">
+            <header class="mb-12">
+                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">System Overview</h2>
+                <p class="text-white/40 text-sm mt-2">Live synchronization from cloud database.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="admin-card p-8">
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Total Movies</p>
+                    <p class="text-4xl font-black premium-font" id="stat-movies">0</p>
+                </div>
+                <div class="admin-card p-8">
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Registered Users</p>
+                    <p class="text-4xl font-black premium-font" id="stat-users">0</p>
+                </div>
+                <div class="admin-card p-8">
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Storage Sync</p>
+                    <p class="text-4xl font-black premium-font">GitHub</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN EDITOR VIEW -->
+        <div id="view-editor" class="view-section">
+            <header class="mb-12">
+                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Admin Editor</h2>
+                <p class="text-white/40 text-sm mt-2">Upload media assets for portrait and landscape displays.</p>
+            </header>
+
+            <div class="grid lg:grid-cols-2 gap-12">
+                <div class="admin-card p-10">
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 flex items-center">
+                        <span id="form-mode-indicator" class="w-2 h-2 bg-[#0070ff] rounded-full mr-3"></span> 
+                        <span id="form-title">New Transmission</span>
+                    </h3>
+                    
+                    <input type="hidden" id="edit-id">
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Movie Title</label>
+                                <input type="text" id="m-title" class="w-full p-4 rounded-xl text-sm" placeholder="Title">
+                            </div>
+                            <div>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Genre</label>
+                                <input type="text" id="m-genre" class="w-full p-4 rounded-xl text-sm" placeholder="Genre">
+                            </div>
+                        </div>
+
+                        <!-- Dual Poster Uploads -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster (9:16)</label>
+                                <div class="file-upload-zone ratio-portrait rounded-xl" onclick="document.getElementById('portrait-input').click()">
+                                    <input type="file" id="portrait-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'portrait')">
+                                    <div id="portrait-preview-container" class="hidden w-full h-full">
+                                        <img id="portrait-preview" class="preview-img" src="">
+                                    </div>
+                                    <div id="portrait-placeholder" class="text-center p-4">
+                                        <p class="text-[8px] uppercase font-bold text-white/20">Card View</p>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="m-poster-portrait">
+                            </div>
+                            <div class="flex flex-col gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop (16:9)</label>
+                                    <div class="file-upload-zone ratio-landscape rounded-xl" onclick="document.getElementById('landscape-input').click()">
+                                        <input type="file" id="landscape-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'landscape')">
+                                        <div id="landscape-preview-container" class="hidden w-full h-full">
+                                            <img id="landscape-preview" class="preview-img" src="">
+                                        </div>
+                                        <div id="landscape-placeholder" class="text-center p-4">
+                                            <p class="text-[8px] uppercase font-bold text-white/20">Hero View</p>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="m-poster-landscape">
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">MP4 Source File</label>
+                                    <div class="file-upload-zone rounded-xl flex-1 h-[115px]" onclick="document.getElementById('video-input').click()">
+                                        <input type="file" id="video-input" accept="video/mp4" class="hidden" onchange="handleVideoUpload(this)">
+                                        <div id="video-status" class="text-center p-2">
+                                            <p class="text-[8px] uppercase font-bold text-white/20" id="video-filename">Select MP4</p>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="m-video-url">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Plot Synopsis</label>
+                            <textarea id="m-plot" class="w-full p-4 rounded-xl text-sm h-24" placeholder="Synopsis"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Visibility</label>
+                                <select id="m-target" class="w-full p-4 rounded-xl text-sm">
+                                    <option value="public">Public (index.html)</option>
+                                    <option value="premium">Premium (userindex)</option>
+                                    <option value="both">Global Release</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button id="btn-submit" onclick="saveMovie()" class="flex-1 bg-[#0070ff] text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-white hover:text-black transition-all">Push to GitHub</button>
+                                <button id="btn-cancel" onclick="resetForm()" class="hidden bg-white/10 px-4 rounded-xl text-[10px] font-bold uppercase">X</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 opacity-40">Active Repository Assets</h3>
+                    <div id="admin-movie-list" class="space-y-4 max-h-[700px] overflow-y-auto pr-2">
+                        <!-- Content loaded from Firestore -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USER DATABASE VIEW -->
+        <div id="view-users" class="view-section">
+            <header class="mb-12">
+                <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Identity Database</h2>
+                <p class="text-white/40 text-sm mt-2">Active operator registry from normal_log.html</p>
+            </header>
+            <div class="admin-card overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-white/5 text-[10px] uppercase tracking-[3px] text-white/40">
+                        <tr>
+                            <th class="p-6">Operator UID</th>
+                            <th class="p-6">Status</th>
+                            <th class="p-6">Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list" class="divide-y divide-white/5">
+                        <!-- Users loaded from Firestore -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-app';
+
+        let currentUser = null;
+
+        async function init() {
+            try {
+                await signInAnonymously(auth);
+            } catch (err) { console.error(err); }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('auth-status').innerText = "GitHub Sync Connected";
+                loadData();
+            }
+        });
+
+        // MEDIA HANDLERS
+        window.handleImageUpload = function(input, type) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(`${type}-preview`).src = e.target.result;
+                    document.getElementById(`${type}-preview-container`).classList.remove('hidden');
+                    document.getElementById(`${type}-placeholder`).classList.add('hidden');
+                    document.getElementById(`m-poster-${type}`).value = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.handleVideoUpload = function(input) {
+            const file = input.files[0];
+            if (file) {
+                document.getElementById('video-filename').innerText = file.name;
+                document.getElementById('video-filename').style.color = "#00ff41";
+                const titleSlug = document.getElementById('m-title').value.toLowerCase().replace(/ /g, '-');
+                document.getElementById('m-video-url').value = `assets/movies/${titleSlug || 'release'}/${file.name}`;
+            }
+        };
+
+        // DATA LOADING
+        function loadData() {
+            if (!currentUser) return;
+            const movieQuery = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
+            onSnapshot(movieQuery, (snapshot) => {
+                const movies = [];
+                snapshot.forEach(doc => movies.push({ id: doc.id, ...doc.data() }));
+                renderMovies(movies);
+                document.getElementById('stat-movies').innerText = movies.length;
+            }, (err) => console.error(err));
+
+            const userQuery = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
+            onSnapshot(userQuery, (snapshot) => {
+                const sessions = [];
+                snapshot.forEach(doc => sessions.push({ id: doc.id, ...doc.data() }));
+                renderUsers(sessions);
+                document.getElementById('stat-users').innerText = sessions.length;
+            }, (err) => console.error(err));
+        }
+
+        function renderMovies(movies) {
+            const list = document.getElementById('admin-movie-list');
+            list.innerHTML = movies.map(movie => `
+                <div class="admin-card p-4 flex items-center justify-between border-white/5 group">
+                    <div class="flex items-center">
+                        <div class="flex gap-2 mr-4">
+                            <img src="${movie.posterPortrait || 'https://via.placeholder.com/150'}" class="w-10 h-14 object-cover rounded bg-white/10">
+                            <img src="${movie.posterLandscape || 'https://via.placeholder.com/150'}" class="w-20 h-14 object-cover rounded bg-white/10">
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase">${movie.title}</p>
+                            <div class="flex gap-2 mt-1">
+                                <span class="text-[7px] uppercase font-black bg-white/10 px-1.5 py-0.5 rounded">${movie.target}</span>
+                                <span class="github-tag">${movie.videoUrl?.split('/').pop() || 'media'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editMovie('${movie.id}')" class="text-[9px] uppercase font-bold text-[#0070ff]">Edit</button>
+                        <button onclick="deleteMovie('${movie.id}')" class="text-[9px] uppercase font-bold text-[#ff3e00]">Purge</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderUsers(sessions) {
+            const list = document.getElementById('user-list');
+            list.innerHTML = sessions.map(session => `
+                <tr>
+                    <td class="p-6 font-mono text-xs">${session.userId || 'ANON'}</td>
+                    <td class="p-6"><span class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[9px] font-bold uppercase">Active</span></td>
+                    <td class="p-6 text-white/40 text-[10px]">${session.timestamp?.toDate().toLocaleString() || 'Recent'}</td>
+                </tr>
+            `).join('');
+        }
+
+        window.saveMovie = async function() {
+            if (!currentUser) return;
+            const id = document.getElementById('edit-id').value;
+            const data = {
+                title: document.getElementById('m-title').value,
+                genre: document.getElementById('m-genre').value,
+                posterPortrait: document.getElementById('m-poster-portrait').value,
+                posterLandscape: document.getElementById('m-poster-landscape').value,
+                videoUrl: document.getElementById('m-video-url').value,
+                plot: document.getElementById('m-plot').value,
+                target: document.getElementById('m-target').value,
+                updatedAt: serverTimestamp()
+            };
+
+            if (!data.title) return alert("System requires a title.");
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "COMMITTING...";
+            btn.disabled = true;
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id), data);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
+                }
+                resetForm();
+            } catch (err) { alert("Deployment Error: " + err.message); }
+            btn.disabled = false;
+        };
+
+        window.editMovie = async function(id) {
+            const movieSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
+            if (movieSnap.exists()) {
+                const data = movieSnap.data();
+                document.getElementById('edit-id').value = id;
+                document.getElementById('m-title').value = data.title;
+                document.getElementById('m-genre').value = data.genre;
+                document.getElementById('m-poster-portrait').value = data.posterPortrait || "";
+                document.getElementById('m-poster-landscape').value = data.posterLandscape || "";
+                document.getElementById('m-video-url').value = data.videoUrl || "";
+                document.getElementById('m-plot').value = data.plot;
+                document.getElementById('m-target').value = data.target;
+
+                if(data.posterPortrait) {
+                    document.getElementById('portrait-preview').src = data.posterPortrait;
+                    document.getElementById('portrait-preview-container').classList.remove('hidden');
+                    document.getElementById('portrait-placeholder').classList.add('hidden');
+                }
+                if(data.posterLandscape) {
+                    document.getElementById('landscape-preview').src = data.posterLandscape;
+                    document.getElementById('landscape-preview-container').classList.remove('hidden');
+                    document.getElementById('landscape-placeholder').classList.add('hidden');
+                }
+                if(data.videoUrl) {
+                    document.getElementById('video-filename').innerText = data.videoUrl.split('/').pop();
+                    document.getElementById('video-filename').style.color = "#00ff41";
+                }
+
+                document.getElementById('form-title').innerText = "Modify Deployment";
+                document.getElementById('btn-submit').innerText = "Update Repository";
+                document.getElementById('btn-cancel').classList.remove('hidden');
+            }
+        };
+
+        window.deleteMovie = async function(id) {
+            if (confirm("Purge asset from repository?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
+            }
+        };
+
+        window.resetForm = function() {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('m-title').value = "";
+            document.getElementById('m-genre').value = "";
+            document.getElementById('m-poster-portrait').value = "";
+            document.getElementById('m-poster-landscape').value = "";
+            document.getElementById('m-video-url').value = "";
+            document.getElementById('m-plot').value = "";
+            document.getElementById('m-target').value = "public";
+            
+            document.getElementById('portrait-preview-container').classList.add('hidden');
+            document.getElementById('portrait-placeholder').classList.remove('hidden');
+            document.getElementById('landscape-preview-container').classList.add('hidden');
+            document.getElementById('landscape-placeholder').classList.remove('hidden');
+            document.getElementById('video-filename').innerText = "Select MP4";
+            document.getElementById('video-filename').style.color = "";
+            
+            document.getElementById('form-title').innerText = "New Transmission";
+            document.getElementById('btn-submit').innerText = "Push to GitHub";
+            document.getElementById('btn-cancel').classList.add('hidden');
+        };
+
+        window.switchView = function(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                if(item.dataset.view === viewId) item.classList.add('active');
+            });
+        };
+
+        init();
+    </script>
+</body>
+</html>

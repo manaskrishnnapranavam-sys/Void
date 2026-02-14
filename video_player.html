@@ -3,247 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOID | Cinema Player</title>
+    <title>VOID | Advanced Neural Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load the shared database -->
     <script src="void_data.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --accent: #ff3e00;
-            --bg: #050505;
+        :root { --accent: #ff3e00; --bg: #020202; }
+        body { background-color: var(--bg); color: #ffffff; font-family: 'Outfit', sans-serif; margin: 0; overflow: hidden; }
+        
+        /* Ambient Glow Effect */
+        #ambient-layer {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at center, var(--accent) 0%, transparent 70%);
+            opacity: 0.15; filter: blur(100px);
+            pointer-events: none; transition: opacity 1s; z-index: 1;
         }
 
-        body {
-            background-color: var(--bg);
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
+        .player-container {
+            position: relative; width: 100vw; height: 100vh;
+            background: #000; display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
 
-        .premium-font { font-family: 'Outfit', sans-serif; }
+        video { width: 100%; height: 100%; object-fit: contain; z-index: 2; cursor: pointer; }
 
-        .player-wrapper {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* UI Overlay */
+        .overlay {
+            position: absolute; inset: 0; z-index: 50;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.6) 100%);
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 2.5rem; opacity: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .player-container:hover .overlay, .overlay.active { opacity: 1; }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        /* Progress Bar */
+        .track-bg { height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; position: relative; width: 100%; }
+        .track-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 10px; position: relative; transition: width 0.1s linear; }
+        .track-fill::after { 
+            content: ''; position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+            width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 15px var(--accent);
+            opacity: 0; transition: opacity 0.2s;
         }
+        .track-bg:hover .track-fill::after { opacity: 1; }
 
-        .video-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 2rem;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            z-index: 10;
-        }
+        /* Controls */
+        .glass-panel { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 0.75rem 1.5rem; }
+        .control-icon { color: white; opacity: 0.8; transition: all 0.2s; cursor: pointer; }
+        .control-icon:hover { opacity: 1; color: var(--accent); transform: scale(1.1); }
+        
+        /* Volume Slider */
+        .volume-slider { width: 0px; opacity: 0; transition: all 0.3s; overflow: hidden; }
+        .volume-group:hover .volume-slider { width: 100px; opacity: 1; margin-left: 10px; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: white; cursor: pointer; }
 
-        .player-wrapper:hover .video-overlay,
-        .player-wrapper.touch-active .video-overlay {
-            opacity: 1;
+        /* Menu Selectors */
+        .menu-dropdown {
+            position: absolute; bottom: 80px; right: 0;
+            background: rgba(15,15,15,0.95); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            width: 160px; padding: 8px; display: none; flex-direction: column; z-index: 100;
         }
+        .menu-dropdown.show { display: flex; }
+        .menu-item { 
+            padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer;
+            display: flex; justify-content: space-between; transition: 0.2s;
+        }
+        .menu-item:hover { background: var(--accent); color: white; }
+        .menu-item.active { color: var(--accent); font-weight: bold; }
 
-        .control-bar {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            width: 100%;
-        }
-
-        .progress-container {
-            flex-grow: 1;
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            position: relative;
-            cursor: pointer;
-            border-radius: 2px;
-            transition: height 0.2s;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: var(--accent);
-            width: 0%;
-            border-radius: 2px;
-            position: relative;
-        }
-
-        .icon-btn {
-            transition: transform 0.2s, color 0.2s;
-            cursor: pointer;
-        }
-
-        .icon-btn:hover {
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-
-        #error-screen {
-            position: absolute;
-            inset: 0;
-            background: #050505;
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        /* Debug console style */
-        #path-debug {
-            font-family: monospace;
-            font-size: 10px;
-            color: #ff3e00;
-            margin-top: 10px;
-            opacity: 0.6;
-        }
+        #error-screen { position: absolute; inset: 0; z-index: 1000; background: #000; display: none; align-items: center; justify-content: center; }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
     </style>
 </head>
 <body>
 
-    <div id="error-screen">
-        <h1 class="premium-font text-4xl font-black text-[#ff3e00] mb-4">SIGNAL LOST</h1>
-        <p id="error-message" class="text-white/40 mb-2 uppercase tracking-[3px]">Media file unavailable.</p>
-        <div id="path-debug"></div>
-        <a href="index.html" class="mt-8 px-8 py-3 border border-white/20 rounded-full hover:bg-white hover:text-black transition-all uppercase text-xs font-bold tracking-widest">Return to Base</a>
+    <div id="ambient-layer"></div>
+
+    <div id="error-screen" class="flex-col">
+        <h1 class="text-6xl font-black text-[#ff3e00] mb-4">SYSTEM_FAILURE</h1>
+        <p class="text-white/40 tracking-[5px] uppercase text-sm mb-8">Video asset missing or corrupted</p>
+        <button onclick="location.href='index.html'" class="px-8 py-3 bg-white text-black font-bold uppercase rounded-full hover:bg-[#ff3e00] hover:text-white transition-all">Emergency Exit</button>
     </div>
 
-    <div class="player-wrapper" id="player-container">
-        <video id="main-video" playsinline>
-            <source id="video-source" src="" type="video/mp4">
+    <div class="player-container" id="player-container">
+        <video id="video-element" playsinline>
+            <source id="video-src" src="" type="video/mp4">
         </video>
 
-        <div class="video-overlay">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-6">
-                    <a href="index.html" class="icon-btn">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round"/></svg>
-                    </a>
+        <!-- Top UI -->
+        <div class="overlay">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-5">
+                    <button onclick="location.href='index.html'" class="control-icon p-2 bg-white/5 rounded-full">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                     <div>
-                        <h2 id="movie-title" class="premium-font text-xl font-bold tracking-tight">LOADING...</h2>
-                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Encrypted Stream</p>
+                        <h2 id="movie-title" class="text-2xl font-black tracking-tighter uppercase italic">VOID_STREAM</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="px-2 py-0.5 bg-[#ff3e00] text-[10px] font-black rounded uppercase">Live Sync</span>
+                            <span id="quality-badge" class="text-[10px] text-white/50 font-bold uppercase mono">1080P // NEURAL_LINK</span>
+                        </div>
                     </div>
+                </div>
+                <div class="mono text-right text-[10px] text-white/30 hidden md:block">
+                    BUFFER_HEALTH: 98.4%<br>SIGNAL_STRENGTH: OPTIMAL
                 </div>
             </div>
 
+            <!-- Bottom UI -->
             <div class="space-y-6">
-                <div class="progress-container" id="seek-container">
-                    <div class="progress-bar" id="progress-fill"></div>
+                <!-- Progress -->
+                <div class="flex items-center gap-4">
+                    <span class="mono text-[11px] w-12 text-white/60" id="time-current">00:00</span>
+                    <div class="track-bg" id="progress-container">
+                        <div class="track-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="mono text-[11px] w-12 text-white/60" id="time-total">00:00</span>
                 </div>
 
-                <div class="control-bar">
-                    <button id="play-pause" class="icon-btn">
-                        <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        <svg id="pause-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                    </button>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-6 glass-panel">
+                        <!-- Play/Pause -->
+                        <button id="btn-play" class="control-icon">
+                            <svg id="icon-play" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="icon-pause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
 
-                    <div class="flex items-center gap-3">
-                        <svg class="w-6 h-6 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-                        <div class="w-20 h-1 bg-white/20 rounded-full"><div class="w-2/3 h-full bg-white rounded-full"></div></div>
+                        <!-- Volume -->
+                        <div class="flex items-center volume-group">
+                            <button id="btn-mute" class="control-icon">
+                                <svg id="icon-vol" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                            </button>
+                            <div class="volume-slider">
+                                <input type="range" id="volume-input" min="0" max="1" step="0.05" value="1" class="w-full">
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="flex-grow"></div>
-                    <span class="text-xs font-mono opacity-60" id="time-display">00:00 / 00:00</span>
-                    <button id="fullscreen-btn" class="icon-btn">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5" stroke-width="2" stroke-linecap="round"/></svg>
-                    </button>
+                    <!-- Right Controls -->
+                    <div class="flex items-center gap-4 glass-panel relative">
+                        <!-- Speed -->
+                        <div class="relative">
+                            <button id="btn-speed" class="control-icon flex items-center gap-1">
+                                <span class="mono text-[11px] font-bold" id="speed-label">1.0x</span>
+                            </button>
+                            <div id="speed-menu" class="menu-dropdown">
+                                <div class="menu-item" onclick="setSpeed(0.5)">0.5x</div>
+                                <div class="menu-item active" onclick="setSpeed(1.0)">Normal</div>
+                                <div class="menu-item" onclick="setSpeed(1.5)">1.5x</div>
+                                <div class="menu-item" onclick="setSpeed(2.0)">2.0x</div>
+                            </div>
+                        </div>
+
+                        <!-- Quality -->
+                        <div class="relative">
+                            <button id="btn-quality" class="control-icon">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
+                            </button>
+                            <div id="quality-menu" class="menu-dropdown">
+                                <div class="menu-item" onclick="setQuality('4K')">4K Neural</div>
+                                <div class="menu-item active" onclick="setQuality('1080P')">1080P Clear</div>
+                                <div class="menu-item" onclick="setQuality('720P')">720P Data</div>
+                                <div class="menu-item" onclick="setQuality('AUTO')">Auto (Sync)</div>
+                            </div>
+                        </div>
+
+                        <!-- Fullscreen -->
+                        <button id="btn-fs" class="control-icon">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const video = document.getElementById('main-video');
-        const videoSource = document.getElementById('video-source');
-        const titleEl = document.getElementById('movie-title');
-        const errorScreen = document.getElementById('error-screen');
-        const debugEl = document.getElementById('path-debug');
+        const v = document.getElementById('video-element');
+        const container = document.getElementById('player-container');
+        const playBtn = document.getElementById('btn-play');
+        const volInput = document.getElementById('volume-input');
+        const progressFill = document.getElementById('progress-fill');
+        const timeCur = document.getElementById('time-current');
+        const timeTot = document.getElementById('time-total');
+        const qualityMenu = document.getElementById('quality-menu');
+        const speedMenu = document.getElementById('speed-menu');
+        const ambient = document.getElementById('ambient-layer');
 
-        function initPlayer() {
+        let hideTimeout;
+
+        function init() {
             const urlParams = new URLSearchParams(window.location.search);
             const movieId = urlParams.get('id');
+            const movie = window.VOID_DB?.find(m => String(m.id) === String(movieId));
 
-            if (!movieId || !window.VOID_DB) {
-                showError("Database not linked.");
+            if (!movie) {
+                document.getElementById('error-screen').style.display = 'flex';
                 return;
             }
 
-            const movie = window.VOID_DB.find(m => String(m.id) === String(movieId));
-            if (!movie || !movie.videoUrl) {
-                showError("Movie ID or Video Path missing.");
-                return;
-            }
-
-            titleEl.innerText = movie.title.toUpperCase();
-
-            // --- SMART PATH LOGIC ---
-            let path = movie.videoUrl;
-            
-            // If you typed "movie.mp4" but it's in "media/movie.mp4"
-            // we ensure the path is consistent.
-            debugEl.innerText = "Attempting to load: " + path;
-
-            videoSource.src = path;
-            video.load();
-
-            video.play().catch(err => {
-                console.warn("Autoplay blocked or file not found:", err);
-                // If it fails immediately, it might be a path error
-                if (video.networkState === 3) { 
-                    showError("File not found at: " + path);
-                }
-            });
+            document.getElementById('movie-title').innerText = movie.title;
+            const path = movie.videoUrl.startsWith('media/') ? movie.videoUrl : 'media/' + movie.videoUrl;
+            document.getElementById('video-src').src = path;
+            v.load();
         }
 
-        // Catching specific video errors
-        video.onerror = function() {
-            showError("The video file could not be loaded. Check your 'media' folder.");
-            debugEl.innerText = "Tried Path: " + videoSource.src;
-        };
-
-        function showError(msg) {
-            errorScreen.style.display = 'flex';
-            document.getElementById('error-message').innerText = msg;
-        }
-
-        // Basic Controls
-        document.getElementById('play-pause').onclick = () => {
-            if (video.paused) {
-                video.play();
-                document.getElementById('play-icon').classList.add('hidden');
-                document.getElementById('pause-icon').classList.remove('hidden');
+        // Play/Pause
+        function togglePlay() {
+            if (v.paused) {
+                v.play();
+                document.getElementById('icon-play').classList.add('hidden');
+                document.getElementById('icon-pause').classList.remove('hidden');
+                ambient.style.opacity = "0.2";
             } else {
-                video.pause();
-                document.getElementById('play-icon').classList.remove('hidden');
-                document.getElementById('pause-icon').classList.add('hidden');
+                v.pause();
+                document.getElementById('icon-play').classList.remove('hidden');
+                document.getElementById('icon-pause').classList.add('hidden');
+                ambient.style.opacity = "0.05";
             }
+        }
+
+        // Fullscreen Fixed
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Volume Logic
+        volInput.oninput = (e) => {
+            const val = e.target.value;
+            v.volume = val;
+            v.muted = (val == 0);
+            updateVolIcon(val);
         };
 
-        video.ontimeupdate = () => {
-            const p = (video.currentTime / video.duration) * 100;
-            document.getElementById('progress-fill').style.width = p + '%';
+        function updateVolIcon(val) {
+            const icon = document.getElementById('icon-vol');
+            if (val == 0) icon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.41.31-.85.57-1.34.74v2.06c1.03-.22 1.98-.67 2.82-1.28l2.35 2.35L21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+            else icon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+        }
+
+        // Speed/Quality Menu
+        function setSpeed(s) {
+            v.playbackRate = s;
+            document.getElementById('speed-label').innerText = s + 'x';
+            speedMenu.classList.remove('show');
+            document.querySelectorAll('#speed-menu .menu-item').forEach(i => i.classList.remove('active'));
+        }
+
+        function setQuality(q) {
+            document.getElementById('quality-badge').innerText = `${q} // NEURAL_LINK`;
+            qualityMenu.classList.remove('show');
+            // Mocking quality change as it's a single file, but visually updates
+        }
+
+        // Time / Progress
+        v.ontimeupdate = () => {
+            const p = (v.currentTime / v.duration) * 100;
+            progressFill.style.width = p + '%';
+            timeCur.innerText = formatTime(v.currentTime);
+            timeTot.innerText = formatTime(v.duration);
         };
 
-        window.onload = initPlayer;
+        function formatTime(s) {
+            if (isNaN(s)) return "00:00";
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m < 10 ? '0'+m : m}:${sec < 10 ? '0'+sec : sec}`;
+        }
+
+        // Event Listeners
+        playBtn.onclick = togglePlay;
+        v.onclick = togglePlay;
+        document.getElementById('btn-fs').onclick = toggleFullscreen;
+        document.getElementById('btn-quality').onclick = () => qualityMenu.classList.toggle('show');
+        document.getElementById('btn-speed').onclick = () => speedMenu.classList.toggle('show');
+
+        document.getElementById('progress-container').onclick = (e) => {
+            const rect = e.target.closest('.track-bg').getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            v.currentTime = pos * v.duration;
+        };
+
+        // UI Auto-hide
+        container.onmousemove = () => {
+            document.querySelector('.overlay').classList.add('active');
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                if (!v.paused) document.querySelector('.overlay').classList.remove('active');
+            }, 3000);
+        };
+
+        // Keyboard Shortcuts
+        window.onkeydown = (e) => {
+            if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+            if (e.code === 'KeyF') toggleFullscreen();
+            if (e.code === 'ArrowRight') v.currentTime += 5;
+            if (e.code === 'ArrowLeft') v.currentTime -= 5;
+        };
+
+        window.onload = init;
     </script>
 </body>
 </html>

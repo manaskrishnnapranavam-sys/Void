@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID | Admin Terminal Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;500;700&family=Outfit:wght@900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --terminal-accent: #ff3e00; /* Red */
+            --terminal-secondary: #0070ff; /* Blue */
+            --terminal-bg: #050505;
+        }
+
+        body {
+            background-color: var(--terminal-bg);
+            color: var(--terminal-secondary);
+            font-family: 'Fira Code', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Matrix Rain Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        .terminal-box {
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid var(--terminal-accent);
+            box-shadow: 0 0 20px rgba(255, 62, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            padding: 2.5rem;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .terminal-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--terminal-accent);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(0, 112, 255, 0.3);
+            color: white;
+            width: 100%;
+            padding: 10px 0;
+            margin-bottom: 2rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-bottom-color: var(--terminal-secondary);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: var(--terminal-secondary);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .btn-access {
+            background: var(--terminal-secondary);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-access:hover {
+            background: var(--terminal-accent);
+            box-shadow: 0 0 30px rgba(255, 62, 0, 0.4);
+        }
+
+        .glitch-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            color: white;
+            letter-spacing: -2px;
+            margin-bottom: 1rem;
+        }
+
+        #error-msg {
+            color: #ff3e00;
+            font-size: 12px;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="terminal-box">
+        <div class="terminal-header">
+            <span>SSH - root@void-server:/root</span>
+            <span>[X]</span>
+        </div>
+
+        <div class="mb-8">
+            <h1 class="glitch-text uppercase">System Admin<span class="text-[#0070ff]">.</span></h1>
+            <p class="text-[10px] opacity-60 uppercase tracking-widest" style="color: var(--terminal-secondary)">Identify yourself to access core movie database.</p>
+        </div>
+
+        <div id="login-form">
+            <div class="text-[11px] mb-1 opacity-40 uppercase" style="color: var(--terminal-secondary)">Operator ID</div>
+            <input type="text" id="admin-id" autocomplete="off" spellcheck="false">
+            
+            <div class="text-[11px] mb-1 opacity-40 uppercase" style="color: var(--terminal-secondary)">Access Key</div>
+            <input type="password" id="admin-pass">
+
+            <button onclick="handleLogin()" class="btn-access">Execute Authentication</button>
+            <p id="error-msg">ACCESS DENIED: UNKNOWN SIGNATURE</p>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-white/5">
+            <div class="text-[9px] opacity-30 leading-relaxed uppercase" style="color: var(--terminal-secondary)">
+                > Initializing handshake...<br>
+                > Port 8080: LISTENING<br>
+                > Encryption: AES-256-GCM
+            </div>
+            <a href="index.html" class="inline-block mt-4 text-[9px] hover:text-white transition-colors" style="color: var(--terminal-accent)">← ABORT_SESSION</a>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Background Effect
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%\"'#&_(),.;:?!\\|{}<>[]^~";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Matrix rain is now blue
+            ctx.fillStyle = '#0070ff';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Login Logic
+        function handleLogin() {
+            const id = document.getElementById('admin-id').value;
+            const pass = document.getElementById('admin-pass').value;
+            const error = document.getElementById('error-msg');
+
+            // Set your desired credentials here
+            if (id === 'admin' && pass === 'void123') {
+                error.style.display = 'none';
+                document.querySelector('.btn-access').innerText = "SUCCESS...";
+                setTimeout(() => {
+                    window.location.href = 'admin_page.html';
+                }, 1000);
+            } else {
+                error.style.display = 'block';
+                // Shake effect
+                const box = document.querySelector('.terminal-box');
+                box.style.animation = 'none';
+                void box.offsetWidth; 
+                box.style.border = '1px solid #ff3e00';
+                // Reset to red border
+                setTimeout(() => box.style.border = '1px solid var(--terminal-accent)', 500);
+            }
+        }
+
+        // Allow Enter key to submit
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    </script>
+</body>
+</html>

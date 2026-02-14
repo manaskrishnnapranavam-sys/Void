@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID | Zero Point Productions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #ff3e00;
+            --bg-deep: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        .premium-font { font-family: 'Outfit', sans-serif; }
+
+        /* Focus-Pull Effect */
+        .movie-card {
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        #movie-grid:has(.movie-card:hover) .movie-card:not(:hover),
+        #search-results:has(.movie-card:hover) .movie-card:not(:hover) {
+            filter: blur(14px) brightness(0.3) saturate(0.5);
+            opacity: 0.4;
+            transform: scale(0.97);
+        }
+
+        .movie-card:hover {
+            filter: blur(0px) brightness(1.2);
+            z-index: 20;
+            transform: scale(1.03);
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            z-index: 100;
+        }
+
+        .sidebar-item {
+            transition: all 0.3s ease;
+            position: relative;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            color: #ffffff;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 25%;
+            height: 50%;
+            width: 3px;
+            background-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        /* Hero Slider Adjustments */
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1.5s ease;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slide-content {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-slide.active .slide-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Text Shadow and Tight Tracking for Premium Feel */
+        .hero-title {
+            text-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 80px rgba(0,0,0,0.6);
+            letter-spacing: -0.05em;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s ease;
+            z-index: 50;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 40px rgba(255, 62, 0, 0.5);
+            transform: scale(1.1);
+        }
+
+        .details-gradient {
+            background: linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.98) 75%, var(--bg-deep) 100%);
+        }
+
+        .view-section {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Instant fade for specific sections to avoid the "wait" feel */
+        .instant-view {
+            animation: fadeInSimple 0.4s ease-out;
+        }
+
+        @keyframes fadeInSimple {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8 transition-all duration-500">
+        <div class="w-full">
+            <div class="px-8 mb-12 cursor-pointer" onclick="switchView('home')">
+                <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#ff3e00]">.</span></h1>
+                <p class="hidden lg:block text-[8px] uppercase tracking-[4px] opacity-20 mt-1 font-bold">Zero Point</p>
+            </div>
+
+            <div class="w-full space-y-1">
+                <div onclick="switchView('home')" class="sidebar-item nav-link active flex items-center px-10 py-5 w-full" data-view="home">
+                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">Discovery</span>
+                </div>
+                <div onclick="switchView('search')" class="sidebar-item nav-link flex items-center px-10 py-5 w-full" data-view="search">
+                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">Search</span>
+                </div>
+                <div onclick="switchView('recent')" class="sidebar-item nav-link flex items-center px-10 py-5 w-full" data-view="recent">
+                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="hidden lg:block font-medium text-sm tracking-wide">History</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGIN SECTION -->
+        <div class="px-6 w-full">
+            <div class="hidden lg:block bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+                <p class="text-[10px] text-white/40 leading-relaxed font-medium">
+                    Browsing is free, but <span class="text-white">watch history</span> and <span class="text-white">sync</span> require an account.
+                </p>
+            </div>
+            <button onclick="handleLogin()" class="w-full bg-white text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-[2px] hover:bg-[#ff3e00] hover:text-white transition-all transform active:scale-95 shadow-xl">
+                <span class="hidden lg:inline">Initialize Access</span>
+                <span class="lg:hidden">Login</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="ml-20 lg:ml-64">
+        
+        <div id="view-home" class="view-section active instant-view">
+            <section class="relative h-[92vh] w-full overflow-hidden" id="hero-slider">
+                <!-- JS Injection -->
+            </section>
+
+            <section class="px-8 lg:px-20 py-24">
+                <h3 class="premium-font text-xl font-bold mb-12 flex items-center tracking-[4px] uppercase opacity-40">
+                    Filmography
+                    <div class="ml-8 h-[1px] flex-grow bg-white/5"></div>
+                </h3>
+                <div id="movie-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-10">
+                    <!-- Dynamic Grid -->
+                </div>
+            </section>
+        </div>
+
+        <!-- SEARCH -->
+        <div id="view-search" class="view-section instant-view px-8 lg:px-20 py-24">
+            <h2 class="premium-font text-6xl font-black mb-12 opacity-30 uppercase tracking-tighter">Terminal Search</h2>
+            <div class="max-w-xl">
+                <input type="text" id="search-input" placeholder="Search the void..." 
+                    class="w-full bg-transparent border-b border-white/20 py-4 text-2xl outline-none focus:border-[#ff3e00] transition-all font-light tracking-tight">
+            </div>
+            <div id="search-results" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mt-16">
+                <!-- Search Results appear here -->
+            </div>
+        </div>
+
+        <!-- DETAILS VIEW -->
+        <div id="view-details" class="view-section relative bg-black instant-view">
+            <div id="movie-hero" class="relative h-[80vh] w-full">
+                <img id="detail-backdrop" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 details-gradient"></div>
+                <button onclick="switchView('home')" class="absolute top-10 left-10 z-50 bg-white/5 backdrop-blur-xl p-5 rounded-full border border-white/10 hover:bg-[#ff3e00] transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="px-8 lg:px-32 -mt-64 relative z-10 pb-40">
+                <div class="flex items-center space-x-5 mb-8">
+                    <span id="detail-tag" class="px-4 py-1.5 bg-[#ff3e00] rounded-lg text-[9px] font-black uppercase tracking-[4px]">ORIGINAL</span>
+                    <span id="detail-meta" class="text-white/40 text-[11px] font-bold uppercase tracking-[3px]"></span>
+                </div>
+                <h1 id="detail-title" class="premium-font text-7xl lg:text-[9rem] font-black mb-10 leading-none tracking-tighter uppercase hero-title"></h1>
+                <p id="detail-plot" class="text-white/50 text-xl lg:text-3xl max-w-4xl leading-relaxed mb-16 font-light italic"></p>
+                <button onclick="startPlayback()" class="bg-white text-black px-16 py-6 rounded-full font-black uppercase tracking-[4px] text-xs hover:bg-[#ff3e00] hover:text-white transition-all transform hover:scale-105 shadow-2xl">Start Stream</button>
+            </div>
+        </div>
+
+        <!-- HISTORY (Placeholder) -->
+        <div id="view-recent" class="view-section instant-view px-8 lg:px-20 py-24">
+            <h2 class="premium-font text-6xl font-black mb-12 opacity-30 uppercase tracking-tighter">History</h2>
+            <div class="bg-white/5 border border-white/5 rounded-3xl p-12 text-center max-w-2xl">
+                <p class="text-white/40 text-xl font-light italic mb-8">Personal watch history is restricted to authenticated users.</p>
+                <button onclick="handleLogin()" class="bg-white text-black px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-[3px] hover:bg-[#ff3e00] hover:text-white transition-all">Initialize Access</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const movies = [
+            { id: 0, title: "Eclipse Point", year: 2024, type: "Series", genre: "Sci-Fi", quality: "4K HDR", tag: "New Arrival", plot: "As the universe begins its final contraction, a group of scientists attempts to restart the engine of reality at the edge of the VOID.", backdrop: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070", poster: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1925" },
+            { id: 1, title: "Shifted", year: 2023, type: "Movie", genre: "Thriller", quality: "IMAX", tag: "Trending", plot: "A professional courier who delivers packages between dimensions finds himself carrying a cargo that could rewrite the history of every world.", backdrop: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2070", poster: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059" },
+            { id: 2, title: "Neon Pulse", year: 2024, type: "Special", genre: "Musical", quality: "Atmos", tag: "Original", plot: "A visual symphony exploring the relationship between digital consciousness and analog biology. Directed by the Zero Point team.", backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1925", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1925" },
+            { id: 3, title: "Architect", year: 2022, type: "Doc", genre: "Science", quality: "4K", tag: "Curated", plot: "An intimate look at the creators of the digital universe and the code that governs our perception of reality.", backdrop: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=2070", poster: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=2070" },
+            { id: 4, title: "Running", year: 2024, type: "Movie", genre: "Action", quality: "HDR10+", tag: "Must Watch", plot: "In a world where memories can be bought and sold, one man is running to keep the only memory he has left—of a woman who never existed.", backdrop: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=2037", poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=2037" }
+        ];
+
+        let currentSlide = 0;
+
+        function initSlider() {
+            const slider = document.getElementById('hero-slider');
+            slider.innerHTML = movies.slice(0, 3).map((m, i) => `
+                <div class="hero-slide ${i === 0 ? 'active' : ''}">
+                    <img src="${m.backdrop}" class="absolute inset-0 w-full h-full object-cover grayscale-[20%]">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-end text-center px-8 z-10 pb-24">
+                        <div class="slide-content max-w-6xl">
+                            <div class="flex items-center justify-center space-x-5 mb-8">
+                                <span class="px-4 py-1.5 bg-[#ff3e00] rounded-lg text-[9px] font-black tracking-[5px] uppercase shadow-2xl">${m.tag}</span>
+                                <span class="text-white/60 text-xs font-bold tracking-[3px] uppercase">${m.type} • ${m.quality}</span>
+                            </div>
+                            <h2 class="premium-font text-6xl lg:text-8xl font-black mb-8 hero-title uppercase leading-[0.9]">${m.title}</h2>
+                            <p class="text-white/50 text-lg lg:text-xl max-w-2xl mx-auto mb-12 font-light italic drop-shadow-lg leading-relaxed">
+                                ${m.plot.substring(0, 130)}...
+                            </p>
+                            <div class="flex justify-center space-x-6">
+                                <button onclick="openMovie(${m.id})" class="bg-white text-black px-12 py-5 rounded-full font-black uppercase tracking-[4px] text-[10px] hover:bg-[#ff3e00] hover:text-white transition-all shadow-2xl transform hover:scale-105">View Stream</button>
+                                <button onclick="openMovie(${m.id})" class="bg-white/5 backdrop-blur-2xl border border-white/10 px-12 py-5 rounded-full font-black uppercase tracking-[4px] text-[10px] hover:bg-white/10 transition-all">Archive Info</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('') + `
+                <div class="absolute inset-y-0 left-8 z-30 flex items-center">
+                    <button onclick="prevSlide()" class="nav-btn w-14 h-14 rounded-full text-white text-2xl flex items-center justify-center shadow-2xl">‹</button>
+                </div>
+                <div class="absolute inset-y-0 right-8 z-30 flex items-center">
+                    <button onclick="nextSlide()" class="nav-btn w-14 h-14 rounded-full text-white text-2xl flex items-center justify-center shadow-2xl">›</button>
+                </div>
+            `;
+        }
+
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.hero-slide');
+            slides.forEach(s => s.classList.remove('active'));
+            if (index >= slides.length) currentSlide = 0;
+            else if (index < 0) currentSlide = slides.length - 1;
+            else currentSlide = index;
+            slides[currentSlide].classList.add('active');
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        function renderMovies(targetId, data) {
+            const container = document.getElementById(targetId);
+            if (data.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-white/20 italic mt-4">No matches found in the VOID.</p>';
+                return;
+            }
+            container.innerHTML = data.map(m => `
+                <div class="movie-card" onclick="openMovie(${m.id})">
+                    <div class="aspect-[2/3] rounded-2xl overflow-hidden mb-6 shadow-2xl border border-white/5 bg-white/5">
+                        <img src="${m.poster}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="px-2">
+                        <h4 class="font-black text-[10px] uppercase tracking-[3px] truncate mb-2">${m.title}</h4>
+                        <div class="flex justify-between items-center opacity-30">
+                            <span class="text-[9px] font-bold">${m.year}</span>
+                            <span class="text-[9px] font-bold">${m.genre}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openMovie(id) {
+            const m = movies.find(x => x.id === id);
+            document.getElementById('detail-backdrop').src = m.backdrop;
+            document.getElementById('detail-title').innerText = m.title;
+            document.getElementById('detail-plot').innerText = m.plot;
+            document.getElementById('detail-meta').innerText = `${m.year} • ${m.genre} • ${m.quality} • ${m.type}`;
+            document.getElementById('detail-tag').innerText = m.tag;
+            switchView('details');
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if(link.dataset.view === viewId) link.classList.add('active');
+            });
+            
+            if (viewId === 'search') {
+                const searchInput = document.getElementById('search-input');
+                searchInput.value = '';
+                renderMovies('search-results', movies);
+                searchInput.focus();
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function handleLogin() {
+            alert("Connecting to VOID authentication terminal...");
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const filtered = movies.filter(m => 
+                m.title.toLowerCase().includes(query) || 
+                m.genre.toLowerCase().includes(query)
+            );
+            renderMovies('search-results', filtered);
+        });
+
+        function startPlayback() { alert("Initiating Data Stream from Zero Point..."); }
+
+        window.onload = () => {
+            initSlider();
+            renderMovies('movie-grid', movies);
+            setInterval(nextSlide, 9000);
+        }
+    </script>
+</body>
+</html>

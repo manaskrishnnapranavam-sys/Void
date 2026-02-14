@@ -39,9 +39,11 @@
         .view-section.active { display: block; }
 
         .status-pulse {
-            width: 8px; height: 8px; background: #00ff41; border-radius: 50%;
-            animation: pulse 2s infinite;
+            width: 8px; height: 8px; border-radius: 50%;
         }
+        .status-online { background: #00ff41; animation: pulse 2s infinite; }
+        .status-offline { background: #ff3e00; }
+
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); } }
 
         .file-upload-zone {
@@ -75,24 +77,20 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <nav class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8">
+    <nav class="sidebar fixed top-0 left-0 h-full w-20 lg:w-64 flex flex-col justify-between py-8 transition-all duration-500">
         <div class="w-full">
             <div class="px-8 mb-12">
                 <h1 class="premium-font text-2xl font-black tracking-tighter text-white">VOID<span class="text-[#0070ff]">.</span></h1>
                 <div class="flex items-center mt-2">
-                    <div class="status-pulse mr-2"></div>
-                    <span class="text-[8px] uppercase tracking-[3px] text-[#00ff41] font-bold">Admin Active</span>
+                    <div id="connection-pulse" class="status-pulse status-offline mr-2"></div>
+                    <span id="connection-text" class="text-[8px] uppercase tracking-[3px] text-white/40 font-bold">Connecting...</span>
                 </div>
             </div>
 
             <div class="w-full space-y-1">
-                <div class="px-8 py-2 text-[10px] uppercase tracking-[4px] text-white/20 font-bold">Navigation</div>
                 <div onclick="switchView('dashboard')" class="sidebar-item active flex items-center px-10 py-4 w-full" data-view="dashboard">
                     <span class="hidden lg:block font-medium text-sm tracking-wide">Main Dashboard</span>
                 </div>
-                
-                <div class="px-8 py-4 mt-4 text-[10px] uppercase tracking-[4px] text-white/20 font-bold">Management</div>
                 <div onclick="switchView('editor')" class="sidebar-item flex items-center px-10 py-4 w-full" data-view="editor">
                     <span class="hidden lg:block font-medium text-sm tracking-wide">Admin Editor</span>
                 </div>
@@ -104,10 +102,10 @@
 
         <div class="px-6">
             <div class="flex items-center p-3 bg-white/5 rounded-2xl border border-white/10 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0070ff] to-[#00c6ff] flex items-center justify-center font-black text-xs">AD</div>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0070ff] to-[#00c6ff] flex items-center justify-center font-black text-xs text-white">AD</div>
                 <div class="ml-3 hidden lg:block">
-                    <p class="text-[10px] font-bold uppercase tracking-wider">Root Admin</p>
-                    <p class="text-[8px] text-white/40" id="auth-status">Verifying...</p>
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-white">Root Admin</p>
+                    <p class="text-[8px] text-white/40" id="auth-uid">ID: Identifying...</p>
                 </div>
             </div>
             <a href="index.html" class="block w-full py-3 text-center text-[9px] uppercase tracking-[3px] text-white/20 hover:text-[#ff3e00] transition-colors">Disconnect</a>
@@ -116,16 +114,15 @@
 
     <main class="ml-20 lg:ml-64 p-8 lg:p-16">
         
-        <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="view-section active">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">System Overview</h2>
-                <p class="text-white/40 text-sm mt-2">Live synchronization from cloud database.</p>
+                <p class="text-white/40 text-sm mt-2">Authenticated synchronization with GitHub repository architecture.</p>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 <div class="admin-card p-8">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Total Movies</p>
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Active Movies</p>
                     <p class="text-4xl font-black premium-font" id="stat-movies">0</p>
                 </div>
                 <div class="admin-card p-8">
@@ -133,24 +130,23 @@
                     <p class="text-4xl font-black premium-font" id="stat-users">0</p>
                 </div>
                 <div class="admin-card p-8">
-                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Storage Sync</p>
-                    <p class="text-4xl font-black premium-font">GitHub</p>
+                    <p class="text-[10px] uppercase tracking-[3px] text-white/40 mb-2">Storage Status</p>
+                    <p class="text-4xl font-black premium-font text-[#00ff41]">Synced</p>
                 </div>
             </div>
         </div>
 
-        <!-- ADMIN EDITOR VIEW -->
         <div id="view-editor" class="view-section">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Admin Editor</h2>
-                <p class="text-white/40 text-sm mt-2">Upload media assets for portrait and landscape displays.</p>
+                <p class="text-white/40 text-sm mt-2">Deploy media assets for dual-ratio display platform.</p>
             </header>
 
             <div class="grid lg:grid-cols-2 gap-12">
                 <div class="admin-card p-10">
-                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 flex items-center">
+                    <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 flex items-center text-white/60">
                         <span id="form-mode-indicator" class="w-2 h-2 bg-[#0070ff] rounded-full mr-3"></span> 
-                        <span id="form-title">New Transmission</span>
+                        <span id="form-title">Ready for Transmission</span>
                     </h3>
                     
                     <input type="hidden" id="edit-id">
@@ -166,37 +162,36 @@
                             </div>
                         </div>
 
-                        <!-- Dual Poster Uploads -->
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Portrait Poster (9:16)</label>
+                                <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Poster (9:16)</label>
                                 <div class="file-upload-zone ratio-portrait rounded-xl" onclick="document.getElementById('portrait-input').click()">
                                     <input type="file" id="portrait-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'portrait')">
                                     <div id="portrait-preview-container" class="hidden w-full h-full">
                                         <img id="portrait-preview" class="preview-img" src="">
                                     </div>
                                     <div id="portrait-placeholder" class="text-center p-4">
-                                        <p class="text-[8px] uppercase font-bold text-white/20">Card View</p>
+                                        <p class="text-[8px] uppercase font-bold text-white/20">Portrait</p>
                                     </div>
                                 </div>
                                 <input type="hidden" id="m-poster-portrait">
                             </div>
                             <div class="flex flex-col gap-4">
                                 <div>
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Landscape Backdrop (16:9)</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">Backdrop (16:9)</label>
                                     <div class="file-upload-zone ratio-landscape rounded-xl" onclick="document.getElementById('landscape-input').click()">
                                         <input type="file" id="landscape-input" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'landscape')">
                                         <div id="landscape-preview-container" class="hidden w-full h-full">
                                             <img id="landscape-preview" class="preview-img" src="">
                                         </div>
                                         <div id="landscape-placeholder" class="text-center p-4">
-                                            <p class="text-[8px] uppercase font-bold text-white/20">Hero View</p>
+                                            <p class="text-[8px] uppercase font-bold text-white/20">Landscape</p>
                                         </div>
                                     </div>
                                     <input type="hidden" id="m-poster-landscape">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">MP4 Source File</label>
+                                    <label class="text-[9px] uppercase tracking-widest text-white/30 block mb-2">MP4 Filename</label>
                                     <div class="file-upload-zone rounded-xl flex-1 h-[115px]" onclick="document.getElementById('video-input').click()">
                                         <input type="file" id="video-input" accept="video/mp4" class="hidden" onchange="handleVideoUpload(this)">
                                         <div id="video-status" class="text-center p-2">
@@ -232,17 +227,16 @@
                 <div>
                     <h3 class="premium-font font-bold uppercase tracking-[4px] text-xs mb-8 opacity-40">Active Repository Assets</h3>
                     <div id="admin-movie-list" class="space-y-4 max-h-[700px] overflow-y-auto pr-2">
-                        <!-- Content loaded from Firestore -->
+                        <div class="text-white/10 italic text-xs p-8 text-center">Syncing assets...</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- USER DATABASE VIEW -->
         <div id="view-users" class="view-section">
             <header class="mb-12">
                 <h2 class="premium-font text-5xl font-black uppercase tracking-tighter">Identity Database</h2>
-                <p class="text-white/40 text-sm mt-2">Active operator registry from normal_log.html</p>
+                <p class="text-white/40 text-sm mt-2">Active user registry from cloud authentication.</p>
             </header>
             <div class="admin-card overflow-hidden">
                 <table class="w-full text-left text-sm">
@@ -254,7 +248,7 @@
                         </tr>
                     </thead>
                     <tbody id="user-list" class="divide-y divide-white/5">
-                        <!-- Users loaded from Firestore -->
+                        <!-- Data injected here -->
                     </tbody>
                 </table>
             </div>
@@ -263,32 +257,68 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'void-streaming-app';
 
-        let currentUser = null;
+        let user = null;
 
-        async function init() {
+        // AUTH & SYNC INITIALIZATION
+        const initAuth = async () => {
             try {
-                await signInAnonymously(auth);
-            } catch (err) { console.error(err); }
-        }
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth Error:", err);
+                document.getElementById('connection-text').innerText = "Auth Failed";
+            }
+        };
 
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
+        onAuthStateChanged(auth, (u) => {
+            user = u;
             if (user) {
-                document.getElementById('auth-status').innerText = "GitHub Sync Connected";
-                loadData();
+                document.getElementById('auth-uid').innerText = `ID: ${user.uid.substring(0,10)}...`;
+                document.getElementById('connection-pulse').classList.replace('status-offline', 'status-online');
+                document.getElementById('connection-text').innerText = "GitHub Sync Active";
+                document.getElementById('connection-text').classList.replace('text-white/40', 'text-[#00ff41]');
+                loadCloudData();
             }
         });
 
-        // MEDIA HANDLERS
+        initAuth();
+
+        // DATA LOADING
+        function loadCloudData() {
+            if (!user) return;
+
+            // Movie Listener
+            const movieRef = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
+            onSnapshot(movieRef, (snapshot) => {
+                const movies = [];
+                snapshot.forEach(doc => movies.push({ id: doc.id, ...doc.data() }));
+                renderMovies(movies);
+                document.getElementById('stat-movies').innerText = movies.length;
+            }, (err) => console.error("Firestore Error:", err));
+
+            // User Listener
+            const sessionRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
+            onSnapshot(sessionRef, (snapshot) => {
+                const sessions = [];
+                snapshot.forEach(doc => sessions.push({ id: doc.id, ...doc.data() }));
+                renderUsers(sessions);
+                document.getElementById('stat-users').innerText = sessions.length;
+            }, (err) => console.error("Session Error:", err));
+        }
+
+        // IMAGE HANDLERS
         window.handleImageUpload = function(input, type) {
             const file = input.files[0];
             if (file) {
@@ -313,28 +343,43 @@
             }
         };
 
-        // DATA LOADING
-        function loadData() {
-            if (!currentUser) return;
-            const movieQuery = collection(db, 'artifacts', appId, 'public', 'data', 'movies');
-            onSnapshot(movieQuery, (snapshot) => {
-                const movies = [];
-                snapshot.forEach(doc => movies.push({ id: doc.id, ...doc.data() }));
-                renderMovies(movies);
-                document.getElementById('stat-movies').innerText = movies.length;
-            }, (err) => console.error(err));
+        window.saveMovie = async function() {
+            if (!user) return;
+            const id = document.getElementById('edit-id').value;
+            const data = {
+                title: document.getElementById('m-title').value,
+                genre: document.getElementById('m-genre').value,
+                posterPortrait: document.getElementById('m-poster-portrait').value,
+                posterLandscape: document.getElementById('m-poster-landscape').value,
+                videoUrl: document.getElementById('m-video-url').value,
+                plot: document.getElementById('m-plot').value,
+                target: document.getElementById('m-target').value,
+                updatedAt: serverTimestamp()
+            };
 
-            const userQuery = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
-            onSnapshot(userQuery, (snapshot) => {
-                const sessions = [];
-                snapshot.forEach(doc => sessions.push({ id: doc.id, ...doc.data() }));
-                renderUsers(sessions);
-                document.getElementById('stat-users').innerText = sessions.length;
-            }, (err) => console.error(err));
-        }
+            if (!data.title) return;
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "COMMITTING...";
+            btn.disabled = true;
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id), data);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
+                }
+                resetForm();
+            } catch (err) { alert("Sync Error: " + err.message); }
+            btn.disabled = false;
+        };
 
         function renderMovies(movies) {
             const list = document.getElementById('admin-movie-list');
+            if (!movies.length) {
+                list.innerHTML = `<div class="text-white/10 italic text-xs p-8 text-center border border-white/5 rounded-2xl">No assets deployed yet.</div>`;
+                return;
+            }
             list.innerHTML = movies.map(movie => `
                 <div class="admin-card p-4 flex items-center justify-between border-white/5 group">
                     <div class="flex items-center">
@@ -343,9 +388,9 @@
                             <img src="${movie.posterLandscape || 'https://via.placeholder.com/150'}" class="w-20 h-14 object-cover rounded bg-white/10">
                         </div>
                         <div>
-                            <p class="text-xs font-bold uppercase">${movie.title}</p>
+                            <p class="text-xs font-bold uppercase text-white">${movie.title}</p>
                             <div class="flex gap-2 mt-1">
-                                <span class="text-[7px] uppercase font-black bg-white/10 px-1.5 py-0.5 rounded">${movie.target}</span>
+                                <span class="text-[7px] uppercase font-black bg-white/10 text-white/40 px-1.5 py-0.5 rounded">${movie.target}</span>
                                 <span class="github-tag">${movie.videoUrl?.split('/').pop() || 'media'}</span>
                             </div>
                         </div>
@@ -362,43 +407,12 @@
             const list = document.getElementById('user-list');
             list.innerHTML = sessions.map(session => `
                 <tr>
-                    <td class="p-6 font-mono text-xs">${session.userId || 'ANON'}</td>
-                    <td class="p-6"><span class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[9px] font-bold uppercase">Active</span></td>
-                    <td class="p-6 text-white/40 text-[10px]">${session.timestamp?.toDate().toLocaleString() || 'Recent'}</td>
+                    <td class="p-6 font-mono text-xs text-white/60">${session.userId || 'ANONYMOUS'}</td>
+                    <td class="p-6"><span class="px-3 py-1 bg-[#00ff41]/10 text-[#00ff41] rounded-full text-[9px] font-bold uppercase">Active</span></td>
+                    <td class="p-6 text-white/40 text-[10px]">${session.timestamp?.toDate().toLocaleString() || 'Just now'}</td>
                 </tr>
             `).join('');
         }
-
-        window.saveMovie = async function() {
-            if (!currentUser) return;
-            const id = document.getElementById('edit-id').value;
-            const data = {
-                title: document.getElementById('m-title').value,
-                genre: document.getElementById('m-genre').value,
-                posterPortrait: document.getElementById('m-poster-portrait').value,
-                posterLandscape: document.getElementById('m-poster-landscape').value,
-                videoUrl: document.getElementById('m-video-url').value,
-                plot: document.getElementById('m-plot').value,
-                target: document.getElementById('m-target').value,
-                updatedAt: serverTimestamp()
-            };
-
-            if (!data.title) return alert("System requires a title.");
-
-            const btn = document.getElementById('btn-submit');
-            btn.innerText = "COMMITTING...";
-            btn.disabled = true;
-
-            try {
-                if (id) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id), data);
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), data);
-                }
-                resetForm();
-            } catch (err) { alert("Deployment Error: " + err.message); }
-            btn.disabled = false;
-        };
 
         window.editMovie = async function(id) {
             const movieSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
@@ -428,14 +442,14 @@
                     document.getElementById('video-filename').style.color = "#00ff41";
                 }
 
-                document.getElementById('form-title').innerText = "Modify Deployment";
+                document.getElementById('form-title').innerText = "Asset in Modification";
                 document.getElementById('btn-submit').innerText = "Update Repository";
                 document.getElementById('btn-cancel').classList.remove('hidden');
             }
         };
 
         window.deleteMovie = async function(id) {
-            if (confirm("Purge asset from repository?")) {
+            if (confirm("Delete this asset from cloud storage?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', id));
             }
         };
@@ -449,15 +463,13 @@
             document.getElementById('m-video-url').value = "";
             document.getElementById('m-plot').value = "";
             document.getElementById('m-target').value = "public";
-            
             document.getElementById('portrait-preview-container').classList.add('hidden');
             document.getElementById('portrait-placeholder').classList.remove('hidden');
             document.getElementById('landscape-preview-container').classList.add('hidden');
             document.getElementById('landscape-placeholder').classList.remove('hidden');
             document.getElementById('video-filename').innerText = "Select MP4";
             document.getElementById('video-filename').style.color = "";
-            
-            document.getElementById('form-title').innerText = "New Transmission";
+            document.getElementById('form-title').innerText = "Ready for Transmission";
             document.getElementById('btn-submit').innerText = "Push to GitHub";
             document.getElementById('btn-cancel').classList.add('hidden');
         };
@@ -470,8 +482,6 @@
                 if(item.dataset.view === viewId) item.classList.add('active');
             });
         };
-
-        init();
     </script>
 </body>
 </html>

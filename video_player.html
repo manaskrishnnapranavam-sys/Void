@@ -3,76 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Void Player</title>
+    <title>VOID | Cinema Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="void_data.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #050505; color: #eee; font-family: sans-serif; }
-        .movie-card { background: #111; border: 1px solid #222; border-radius: 12px; }
-        .poster-frame { border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        :root { --accent: #ff3e00; --bg: #050505; }
+        body { background-color: var(--bg); color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        .premium-font { font-family: 'Outfit', sans-serif; }
+        .player-wrapper { position: relative; width: 100vw; height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        .video-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; opacity: 0; transition: opacity 0.4s ease; z-index: 10; }
+        .player-wrapper:hover .video-overlay, .player-wrapper.touch-active .video-overlay { opacity: 1; }
+        .control-bar { display: flex; align-items: center; gap: 1.5rem; width: 100%; }
+        .progress-container { flex-grow: 1; height: 4px; background: rgba(255,255,255,0.2); position: relative; cursor: pointer; border-radius: 2px; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; position: relative; }
+        .icon-btn { transition: transform 0.2s, color 0.2s; cursor: pointer; }
+        .icon-btn:hover { color: var(--accent); transform: scale(1.1); }
+        #error-screen { position: absolute; inset: 0; background: #050505; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+        #path-debug { font-family: monospace; font-size: 10px; color: #ff3e00; margin-top: 10px; opacity: 0.6; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
+<body>
 
-    <div id="player-ui" class="w-full max-w-3xl movie-card p-8 shadow-2xl transition-opacity duration-500 opacity-0">
-        <div class="flex flex-col md:flex-row gap-8 items-center">
-            <!-- Poster -->
-            <div class="w-48 h-72 flex-shrink-0 poster-frame bg-zinc-800">
-                <img id="movie-poster" src="" alt="Poster" class="w-full h-full object-cover">
+    <div id="error-screen">
+        <h1 class="premium-font text-4xl font-black text-[#ff3e00] mb-4">SIGNAL LOST</h1>
+        <p id="error-message" class="text-white/40 mb-2 uppercase tracking-[3px]">Media file unavailable.</p>
+        <div id="path-debug"></div>
+        <a href="index.html" class="mt-8 px-8 py-3 border border-white/20 rounded-full hover:bg-white hover:text-black transition-all uppercase text-xs font-bold tracking-widest">Return to Base</a>
+    </div>
+
+    <div class="player-wrapper" id="player-container">
+        <video id="main-video" playsinline>
+            <source id="video-source" src="" type="video/mp4">
+        </video>
+
+        <div class="video-overlay">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <a href="index.html" class="icon-btn">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round"/></svg>
+                    </a>
+                    <div>
+                        <h2 id="movie-title" class="premium-font text-xl font-bold tracking-tight">LOADING...</h2>
+                        <p id="movie-status" class="text-[10px] text-[#ff3e00] uppercase tracking-[2px]">Stream Active</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Info -->
-            <div class="flex-1 text-center md:text-left">
-                <h1 id="movie-title" class="text-5xl font-black mb-2 tracking-tighter text-white"></h1>
-                <p id="movie-genre" class="text-zinc-500 text-lg mb-6 uppercase tracking-widest"></p>
-                
-                <div class="flex flex-wrap gap-4 justify-center md:justify-start">
-                    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-lg font-bold transition">
-                        WATCH NOW
+            <div class="space-y-6">
+                <div class="progress-container" id="seek-container">
+                    <div class="progress-bar" id="progress-fill"></div>
+                </div>
+                <div class="control-bar">
+                    <button id="play-pause" class="icon-btn">
+                        <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="pause-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </button>
-                    <button class="bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-3 rounded-lg font-bold transition">
-                        + WATCHLIST
+                    <div class="flex-grow"></div>
+                    <span class="text-xs font-mono opacity-60" id="time-display">00:00 / 00:00</span>
+                    <button id="fullscreen-btn" class="icon-btn">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5" stroke-width="2" stroke-linecap="round"/></svg>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Error state -->
-    <div id="error-msg" class="hidden text-zinc-600 font-mono">
-        [ERROR: VOID_DB NOT FOUND]
-    </div>
-
     <script>
-        /**
-         * The player logic specifically designed to read your void_data.js
-         */
-        function startPlayer() {
-            const ui = document.getElementById('player-ui');
-            const error = document.getElementById('error-msg');
+        const video = document.getElementById('main-video');
+        const videoSource = document.getElementById('video-source');
+        const titleEl = document.getElementById('movie-title');
+        const errorScreen = document.getElementById('error-screen');
+        const debugEl = document.getElementById('path-debug');
 
-            // Accessing the data from your void_data.js
-            // window.VOID_DB = [{"title":"FSD", ... }]
-            if (window.VOID_DB && window.VOID_DB.length > 0) {
-                const movie = window.VOID_DB[0];
+        function initPlayer() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const movieId = urlParams.get('id');
 
-                document.getElementById('movie-title').textContent = movie.title || "Unknown";
-                document.getElementById('movie-genre').textContent = movie.genre || "N/A";
-                
-                // Map the Base64 image
-                if (movie.posterPortrait) {
-                    document.getElementById('movie-poster').src = movie.posterPortrait;
-                }
-
-                // Show UI
-                ui.classList.remove('opacity-0');
-            } else {
-                error.classList.remove('hidden');
-                console.error("Data check failed: window.VOID_DB is missing or empty.");
+            if (!movieId || !window.VOID_DB) {
+                showError("Database Connection Error.");
+                return;
             }
+
+            const movie = window.VOID_DB.find(m => String(m.id) === String(movieId));
+            if (!movie || !movie.videoUrl) {
+                showError("Movie Data Missing.");
+                return;
+            }
+
+            titleEl.innerText = movie.title.toUpperCase();
+            
+            // Logic: Try the path provided, but if it's just a filename, try adding 'media/'
+            let primaryPath = movie.videoUrl;
+            videoSource.src = primaryPath;
+            video.load();
+
+            debugEl.innerText = "Target: " + primaryPath;
+
+            video.play().catch(err => {
+                console.log("Waiting for user interaction or path fix...");
+            });
         }
 
-        // Wait for page load
-        window.onload = startPlayer;
+        // AUTO-REPAIR LOGIC: If first attempt fails, try looking in 'media/' folder automatically
+        video.onerror = function() {
+            const currentSrc = videoSource.src;
+            if (!currentSrc.includes('/media/') && !currentSrc.startsWith('media/')) {
+                const fileName = currentSrc.split('/').pop();
+                const fallbackPath = 'media/' + fileName;
+                console.log("Retrying with fallback path:", fallbackPath);
+                debugEl.innerText = "Retrying fallback: " + fallbackPath;
+                
+                videoSource.src = fallbackPath;
+                video.load();
+                video.play().catch(() => {});
+                
+                // Remove this listener so it doesn't loop forever
+                video.onerror = () => showError("File not found in root or /media folder.");
+            } else {
+                showError("The video file could not be found.");
+                debugEl.innerText = "Tried: " + currentSrc;
+            }
+        };
+
+        function showError(msg) {
+            errorScreen.style.display = 'flex';
+            document.getElementById('error-message').innerText = msg;
+        }
+
+        // Basic Control Logic
+        document.getElementById('play-pause').onclick = () => {
+            if (video.paused) {
+                video.play();
+                document.getElementById('play-icon').classList.add('hidden');
+                document.getElementById('pause-icon').classList.remove('hidden');
+            } else {
+                video.pause();
+                document.getElementById('play-icon').classList.remove('hidden');
+                document.getElementById('pause-icon').classList.add('hidden');
+            }
+        };
+
+        video.ontimeupdate = () => {
+            if (video.duration) {
+                const p = (video.currentTime / video.duration) * 100;
+                document.getElementById('progress-fill').style.width = p + '%';
+            }
+        };
+
+        window.onload = initPlayer;
     </script>
 </body>
 </html>

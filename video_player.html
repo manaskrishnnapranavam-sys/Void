@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOID | Advanced Neural Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importing your data file -->
+    <script src="void_data.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
@@ -48,28 +50,13 @@
         .control-icon { color: white; opacity: 0.8; transition: all 0.2s; cursor: pointer; background: transparent; border: none; }
         .control-icon:hover { opacity: 1; color: var(--accent); transform: scale(1.1); }
         
-        .volume-slider { width: 0px; opacity: 0; transition: all 0.3s; overflow: hidden; display: flex; align-items: center; }
-        .volume-group:hover .volume-slider { width: 100px; opacity: 1; margin-left: 10px; }
-
-        .menu-dropdown {
-            position: absolute; bottom: 80px; right: 0;
-            background: rgba(15,15,15,0.95); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
-            width: 160px; padding: 8px; display: none; flex-direction: column; z-index: 100;
-        }
-        .menu-dropdown.show { display: flex; }
-        .menu-item { padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        .menu-item:hover { background: var(--accent); }
-
-        /* Audio Unlocker Screen */
         #audio-unlocker {
             position: absolute; inset: 0; z-index: 100;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             backdrop-filter: blur(20px);
         }
 
-        #file-selector { display: none; }
         .loading-spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -77,14 +64,12 @@
 <body>
 
     <div id="ambient-layer"></div>
-    <input type="file" id="file-selector" accept="video/mp4">
 
-    <!-- Interaction required for Audio -->
     <div id="audio-unlocker">
         <div class="text-center">
             <h1 class="text-4xl font-black italic tracking-tighter mb-4">VOID_LINK</h1>
-            <p class="text-white/40 text-xs tracking-[0.3em] uppercase mb-8">Audio Interface Offline</p>
-            <button id="btn-start" class="bg-[#ff3e00] text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+            <p id="status-text" class="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-8">Reading Neural Data...</p>
+            <button id="btn-start" class="hidden bg-[#ff3e00] text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,62,0,0.3)]">
                 Initialize Stream
             </button>
         </div>
@@ -94,11 +79,11 @@
         <div id="video-loader" class="absolute inset-0 flex items-center justify-center z-10 bg-black">
             <div class="flex flex-col items-center">
                 <div class="loading-spinner mb-4"></div>
-                <p class="text-[10px] tracking-widest uppercase opacity-40">Syncing Neural Data...</p>
+                <p class="text-[10px] tracking-widest uppercase opacity-40">Syncing Stream...</p>
             </div>
         </div>
 
-        <video id="video-element" playsinline crossOrigin="anonymous"></video>
+        <video id="video-element" playsinline crossorigin="anonymous"></video>
 
         <div class="overlay" id="ui-overlay">
             <div class="flex items-start justify-between">
@@ -110,7 +95,7 @@
                         <h2 id="movie-title" class="text-2xl font-black tracking-tighter uppercase italic">VOID_STREAM</h2>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="px-2 py-0.5 bg-[#ff3e00] text-[10px] font-black rounded uppercase">Live Sync</span>
-                            <span id="quality-badge" class="text-[10px] text-white/50 font-bold uppercase">1080P // NEURAL_LINK</span>
+                            <span id="quality-badge" class="text-[10px] text-white/50 font-bold uppercase">HD // NEURAL_LINK</span>
                         </div>
                     </div>
                 </div>
@@ -131,27 +116,8 @@
                             <svg id="icon-play" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                             <svg id="icon-pause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         </button>
-
-                        <div class="flex items-center volume-group">
-                            <button id="btn-mute" class="control-icon">
-                                <svg id="icon-vol" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-                            </button>
-                            <div class="volume-slider">
-                                <input type="range" id="volume-input" min="0" max="1" step="0.05" value="1" class="w-full">
-                            </div>
-                        </div>
                     </div>
-
-                    <div class="flex items-center gap-4 glass-panel relative">
-                        <div class="relative">
-                            <button id="btn-speed" class="control-icon font-mono text-[11px] font-bold">1.0x</button>
-                            <div id="speed-menu" class="menu-dropdown">
-                                <div class="menu-item" onclick="setSpeed(0.5)">0.5x</div>
-                                <div class="menu-item font-bold text-[#ff3e00]" onclick="setSpeed(1.0)">Normal</div>
-                                <div class="menu-item" onclick="setSpeed(1.5)">1.5x</div>
-                                <div class="menu-item" onclick="setSpeed(2.0)">2.0x</div>
-                            </div>
-                        </div>
+                    <div class="flex items-center gap-4 glass-panel">
                         <button id="btn-fs" class="control-icon">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
@@ -162,62 +128,43 @@
     </div>
 
     <script>
+        /**
+         * Expects void_data.js to contain:
+         * const void_config = {
+         * movieUrl: "https://example.com/movie.mp4"
+         * };
+         */
+        
         const v = document.getElementById('video-element');
         const loader = document.getElementById('video-loader');
         const unlocker = document.getElementById('audio-unlocker');
         const startBtn = document.getElementById('btn-start');
+        const statusText = document.getElementById('status-text');
         const playBtn = document.getElementById('btn-play');
-        const volInput = document.getElementById('volume-input');
         const progressFill = document.getElementById('progress-fill');
 
-        function init() {
-            // Hardcoded fallback if external script fails
-            const moviePath = "media/movie.mp4"; 
-            v.src = moviePath;
-            v.load();
-            v.volume = 1.0;
+        function initPlayer() {
+            // Check if void_config exists in the global scope (from void_data.js)
+            if (typeof void_config !== 'undefined' && void_config.movieUrl) {
+                v.src = void_config.movieUrl;
+                v.load();
+                statusText.innerText = "Neural Link Established";
+                startBtn.classList.remove('hidden');
+            } else {
+                statusText.innerText = "DATA_ERROR: void_config.movieUrl NOT FOUND";
+                statusText.classList.add('text-red-500');
+            }
         }
 
-        // IMPORTANT: Start button handles the Browser Audio Policy unlock
         startBtn.onclick = () => {
             unlocker.style.opacity = '0';
             setTimeout(() => unlocker.style.display = 'none', 500);
-            
-            // Explicitly unlock audio
             v.muted = false;
-            v.volume = 1.0;
-            v.play().catch(e => {
-                console.log("Auto-play blocked, waiting for manual play");
-            });
+            v.play();
             updatePlayIcons();
         };
 
-        v.oncanplay = () => {
-            loader.style.display = 'none';
-        };
-
-        v.onerror = () => {
-            loader.innerHTML = `
-                <div class="text-center p-8 glass-panel">
-                    <p class="text-red-500 font-bold mb-4">LINK_ERROR</p>
-                    <p class="text-white/40 text-[10px] mb-6 uppercase tracking-widest">Source: ${v.src}</p>
-                    <button onclick="document.getElementById('file-selector').click()" class="bg-white text-black px-6 py-2 rounded-full text-[10px] font-black uppercase">Locate Media File</button>
-                </div>
-            `;
-        };
-
-        document.getElementById('file-selector').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                v.src = URL.createObjectURL(file);
-                v.muted = false;
-                v.volume = 1.0;
-                v.play();
-                loader.style.display = 'none';
-                unlocker.style.display = 'none';
-                updatePlayIcons();
-            }
-        };
+        v.oncanplay = () => { loader.style.display = 'none'; };
 
         function updatePlayIcons() {
             if (v.paused) {
@@ -229,21 +176,10 @@
             }
         }
 
-        function togglePlay() {
+        playBtn.onclick = () => {
             if (v.paused) v.play(); else v.pause();
             updatePlayIcons();
-        }
-
-        volInput.oninput = (e) => {
-            v.volume = e.target.value;
-            v.muted = (v.volume === 0);
         };
-
-        function setSpeed(s) {
-            v.playbackRate = s;
-            document.getElementById('btn-speed').innerText = s + 'x';
-            document.getElementById('speed-menu').classList.remove('show');
-        }
 
         v.ontimeupdate = () => {
             const p = (v.currentTime / v.duration) * 100;
@@ -259,25 +195,13 @@
             return `${m < 10 ? '0'+m : m}:${sec < 10 ? '0'+sec : sec}`;
         }
 
-        playBtn.onclick = togglePlay;
-        v.onclick = togglePlay;
         document.getElementById('btn-fs').onclick = () => {
             if (!document.fullscreenElement) document.getElementById('player-container').requestFullscreen();
             else document.exitFullscreen();
         };
 
-        document.getElementById('btn-speed').onclick = (e) => {
-            e.stopPropagation();
-            document.getElementById('speed-menu').classList.toggle('show');
-        };
-
-        document.getElementById('progress-container').onclick = (e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            v.currentTime = pos * v.duration;
-        };
-
-        window.onload = init;
+        // Initialize from the JS data
+        initPlayer();
     </script>
 </body>
 </html>
